@@ -1,0 +1,274 @@
+[
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "beef_key",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "beef_id",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "breed",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "process_time",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "process_place",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "process_person",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "transport_time",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "transport_place",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "transport_person",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "ox_id",
+				"type": "uint256"
+			}
+		],
+		"name": "addBeef",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "ox_key",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "ox_id",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "breed",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "end_time",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "feeding_period",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "weight",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "location",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "feed_person",
+				"type": "string"
+			}
+		],
+		"name": "addCow",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"name": "beef",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "beef_id",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "breed",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "process_time",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "process_place",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "process_person",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "transport_time",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "transport_place",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "transport_person",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "ox_id",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "beef_hash",
+				"type": "bytes32"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"name": "cattle",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "ox_id",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "breed",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "end_time",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "feeding_period",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "weight",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "location",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "feed_person",
+				"type": "string"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "ox_hash",
+				"type": "bytes32"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "beef_key",
+				"type": "string"
+			}
+		],
+		"name": "queryBeef",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "ox_key",
+				"type": "string"
+			}
+		],
+		"name": "queryCow",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+]

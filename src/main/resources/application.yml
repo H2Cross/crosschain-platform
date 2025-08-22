@@ -1,0 +1,22 @@
+#???801
+
+server:
+  port: 8080
+  ssl:
+    key-store: classpath:javaboy.p12
+    key-alias: tomcathttps
+    key-store-type: PKCS12
+    key-store-password: zx190190
+
+#?????mysql????root???123456
+spring:
+  datasource:
+    username: root # 数据库账号
+    password: '123456' # 数据库密码
+    url: jdbc:mysql://localhost:3306/crosschain_database?serverTimezone=GMT%2B8&amp&characterEncoding=utf-8 # 数据库IP和端口
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+# mybatis-plus??
+mybatis-plus:
+  # xml????
+  mapper-locations: classpath:mapper/*.xml

@@ -1,0 +1,63 @@
+[36m2025-03-13 07:11:07	[OK]:	Node info loaded successfully from source_info.json.
+[39m
+[34m2025-03-13 07:11:07	[DEBG]:	chainsdk init sucess @ http://127.0.0.1:19333[39m
+[32m2025-03-13 07:11:07	[INFO]:	Bubi source chain: relayer started...[39m
+[32m2025-03-13 07:11:07	[INFO]:	14002: start verification protocol: 1[39m
+[32m2025-03-13 07:11:07	[INFO]:	14002: start verification protocol: 2[39m
+[32m2025-03-13 07:11:07	[INFO]:	14002: start verification layer watch_q_req_tspt_vrfy thread![39m
+[32m2025-03-13 07:11:07	[INFO]:	14002: start verification layer watch_q_req_pre_tspt_vrfy thread![39m
+[32m2025-03-13 07:11:07	[INFO]:	14002: start verification layer watch_q_resp_tspt_vrfy thread![39m
+[32m2025-03-13 07:11:07	[INFO]:	14002: start verification layer watch_q_resp_pre_tspt_vrfy thread![39m
+[32m2025-03-13 07:11:07	[INFO]:	SPV update: XXX[39m
+[32m2025-03-13 07:11:07	[INFO]:	Notary update: XXX[39m
+[36m2025-03-13 07:11:08	[OK]:	Bubi source chain: relayer_verification started successfully.
+[39m
+[32m2025-03-13 07:11:08	[INFO]:	14002: start transport layer watch thread![39m
+[32m2025-03-13 07:11:08	[INFO]:	14002: start transport layer gateway server thread! url: http://0.0.0.0:8089[39m
+[32m2025-03-13 07:11:08	[INFO]:	14002: start transport layer sendReqToTargetRelay thread![39m
+[32m2025-03-13 07:11:08	[INFO]:	14002: start transport layer sendRespToSourceRelay thread![39m
+[32m2025-03-13 07:11:08	[INFO]:	14002: start transport layer sendReqToTargetChain thread![39m
+[32m2025-03-13 07:11:08	[INFO]:	14002: start transport layer sendRespToSourceChain thread![39m
+[32m2025-03-13 07:11:08	[INFO]:	14002: start transport layer dealReqTxHashes thread![39m
+[32m2025-03-13 07:11:08	[INFO]:	14002: start transport layer dealRespTxHashes thread![39m
+[36m2025-03-13 07:11:09	[OK]:	Bubi source chain: relayer_transport started successfully.
+[39m
+[36m2025-03-13 07:11:09	[OK]:	Bubi source chain: relayer started successfully.
+[39m
+[34m2025-03-13 07:11:10	[DEBG]:	start parse block: 173[39m
+[34m2025-03-13 07:11:10	[DEBG]:	Connect to bubichain node  success![39m
+Singleton instance created!
+[34m2025-03-13 07:11:10	[DEBG]:	Contract_Cal  success![39m
+Obtained request cmhash on the source chain(chainid: 14002, cmhash: 65303166346638326362623635613965383337376331306438323730346432663761353231323037336562383333363132303234343131616130656335333636)
+[34m2025-03-13 07:11:10	[DEBG]:	 Watch: SrcChainId-14002 send to DstChainId-13002, send cm to EventsQueueSend[39m
+[34m2025-03-13 07:11:10	[DEBG]:	14002: Watch: send cm to q_req_tspt_vrfy[39m
+[34m2025-03-13 07:11:10	[DEBG]:	14002: watch_q_req_tspt_vrfy: get cm from q_req_tspt_vrfy[39m
+[32m2025-03-13 07:11:10	[INFO]:	14002: generate proof for req cm(16): [112 114 111 111 102 32 111 102 32 83 80 86][39m
+[34m2025-03-13 07:11:10	[DEBG]:	14002: watch_q_req_tspt_vrfy: send cm with proof to q_req_vrfy_tspt[39m
+[34m2025-03-13 07:11:10	[DEBG]:	14002: SendReqToTargetRelay: get cm with proof from q_req_vrfy_tspt[39m
+[34m2025-03-13 07:11:10	[DEBG]:	14002: SendReqToTargetRelay: send cm with proof to gateway[39m
+[34m2025-03-13 07:11:10	[DEBG]:	14002: SendReqToTargetRelay: send cm with proof to gateway successfully get response[39m
+[34m2025-03-13 07:11:11	[DEBG]:	start parse block: 174[39m
+[34m2025-03-13 07:11:12	[DEBG]:	start parse block: 175[39m
+Obtained ack cmhash on the source chain
+[34m2025-03-13 07:12:32	[DEBG]:	start parse block: 176[39m
+[34m2025-03-13 07:12:32	[DEBG]:	Contract_Cal  success![39m
+Obtained request cmhash on the source chain(chainid: 14002, cmhash: 35363231653131663136303632326437323437376565303366363634313531343038333963346636353861336634636531323332663535336534323266323030)
+[34m2025-03-13 07:12:32	[DEBG]:	 Watch: SrcChainId-14002 send to DstChainId-13002, send cm to EventsQueueSend[39m
+[34m2025-03-13 07:12:32	[DEBG]:	14002: Watch: send cm to q_req_tspt_vrfy[39m
+[34m2025-03-13 07:12:32	[DEBG]:	14002: watch_q_req_tspt_vrfy: get cm from q_req_tspt_vrfy[39m
+[32m2025-03-13 07:12:32	[INFO]:	14002: generate proof for req cm(17): [112 114 111 111 102 32 111 102 32 83 80 86][39m
+[34m2025-03-13 07:12:32	[DEBG]:	14002: watch_q_req_tspt_vrfy: send cm with proof to q_req_vrfy_tspt[39m
+[34m2025-03-13 07:12:32	[DEBG]:	14002: SendReqToTargetRelay: get cm with proof from q_req_vrfy_tspt[39m
+[34m2025-03-13 07:12:32	[DEBG]:	14002: SendReqToTargetRelay: send cm with proof to gateway[39m
+[34m2025-03-13 07:12:32	[DEBG]:	14002: SendReqToTargetRelay: send cm with proof to gateway successfully get response[39m
+[34m2025-03-13 07:12:32	[DEBG]:	14002: cmresp handler get request from /cm/resp[39m
+[34m2025-03-13 07:12:32	[DEBG]:	14002: ReceivceRespCmFromOthers: send item to q_resp_pre_tspt_vrfy[39m
+[34m2025-03-13 07:12:32	[DEBG]:	14002: cmresp handler response successfully, from /cm/resp[39m
+[34m2025-03-13 07:12:32	[DEBG]:	14002: watch_q_resp_pre_tspt_vrfy: get cm with proof from q_resp_pre_tspt_vrfy[39m
+[34m2025-03-13 07:12:32	[DEBG]:	14002: watch_q_resp_pre_tspt_vrfy: send cm with proof to q_resp_pre_vrfy_tspt[39m
+[34m2025-03-13 07:12:32	[DEBG]:	14002: SendRespToSourceChain: get cm with proof from q_resp_pre_vrfy_tspt[39m
+[34m2025-03-13 07:12:32	[DEBG]:	contractCallGo succeed,hash=9ec1a57734f5f9ebe828dc7eb87d277c3155840eba848d535f7881fee12866d2[39m
+[34m2025-03-13 07:12:33	[DEBG]:	start parse block: 177[39m
+[32m2025-03-13 07:12:47	[INFO]:	Notary update: XXX[39m
+[32m2025-03-13 07:12:47	[INFO]:	SPV update: XXX[39m
