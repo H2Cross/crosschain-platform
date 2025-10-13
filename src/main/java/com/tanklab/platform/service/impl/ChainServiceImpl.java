@@ -9,6 +9,11 @@ import com.tanklab.platform.ds.resp.CommonResp;
 import com.tanklab.platform.entity.Chain;
 import com.tanklab.platform.mapper.ChainMapper;
 import com.tanklab.platform.service.ChainService;
+
+import io.grpc.ManagedChannel;
+import io.grpc.netty.GrpcSslContexts;
+import io.grpc.netty.NettyChannelBuilder;
+
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -38,8 +43,36 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import javax.net.ssl.SSLContext;
+
+import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 
+import java.nio.file.Path;
+import java.nio.file.Files;
+import org.hyperledger.fabric.gateway.Identities;
+
+import java.io.File;
+import java.nio.file.Paths;
+import org.hyperledger.fabric.gateway.Gateway;
+import org.hyperledger.fabric.gateway.Network;
+import org.hyperledger.fabric.gateway.Wallet;
+import org.hyperledger.fabric.gateway.Wallets;
+
+import org.apache.commons.codec.binary.Hex; 
+import org.hyperledger.fabric.sdk.*;
+
+/* ==========  gRPC / Fabric-Gateway SDK  ========== */
+import io.grpc.Grpc;
+import io.grpc.TlsChannelCredentials;
+import org.hyperledger.fabric.client.*;
+import org.hyperledger.fabric.client.identity.Identities;
+import org.hyperledger.fabric.client.identity.Identity;
+import org.hyperledger.fabric.client.identity.Signer;
+import org.hyperledger.fabric.client.identity.Signers;
+import org.hyperledger.fabric.client.identity.X509Identity;
+
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeUnit;
 /**
  * <p>
  * 链信息表 服务实现类
@@ -63,7 +96,7 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
     @Autowired
     public ChainServiceImpl ChainService;
 
-    private static String cmcpath = "~/CIPS-Gemini-ChainMaker/chainmaker/chainmaker-go/tools/cmc";
+    private static String cmcpath = "~/CIPS-Gemini-v1/CIPS-Gemini-ChainMaker/chainmaker/chainmaker-go/tools/cmc";
     // server服务器 ~/CIPS-H2Chain
     // 学弟服务器 ~/ChainMaker/chainmaker-go/tools/cmc
 
@@ -85,11 +118,10 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
     // /root/CIPS-H2Chain/chainmaker/config_files/sdkconfigs/chain3_sdkconfig1.yml
     // 学弟服务器 ./testdata/sdk_config.yml
 
-
     /**
      * @author ZZY
      * @date 2025/6/4 22:55
-    **/
+     **/
     @Override
     public CommonResp querychainInfo() {
         CommonResp querychainresp = new CommonResp();
@@ -100,34 +132,33 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
 
         String ip = "192.168.0.";
 
-
         Integer chainsize = 5;
 
         JSONObject totalInfo = new JSONObject();
         JSONArray chainsInfo = new JSONArray();
 
         int x = 0;
-        for (CrosschainInfo chain: CrosschainInfo.values()){
+        for (CrosschainInfo chain : CrosschainInfo.values()) {
             JSONObject singleChain = new JSONObject();
-//            JsonObject singleChain = new JsonObject();
-            singleChain.put("Id",chain.ChainName);
-            singleChain.put("Name",chain.ChineseName);
+            // JsonObject singleChain = new JsonObject();
+            singleChain.put("Id", chain.ChainName);
+            singleChain.put("Name", chain.ChineseName);
             JSONArray children = new JSONArray();
-            for (int i = 0; i< chainsize; i++){
+            for (int i = 0; i < chainsize; i++) {
                 JSONObject single = new JSONObject();
-                single.put("Id",chain.ChainId + i);
-                single.put("Name",ip + String.valueOf(i + 1)+":"+String.valueOf(chain.ChainPort));
+                single.put("Id", chain.ChainId + i);
+                single.put("Name", ip + String.valueOf(i + 1) + ":" + String.valueOf(chain.ChainPort));
                 JSONObject parent = new JSONObject();
-                parent.put("Id",chain.ChainName);
-                parent.put("Name",chain.ChineseName);
-                single.put("parent",parent);
+                parent.put("Id", chain.ChainName);
+                parent.put("Name", chain.ChineseName);
+                single.put("parent", parent);
                 children.add(single);
             }
             x++;
-            singleChain.put("children",children);
+            singleChain.put("children", children);
             chainsInfo.add(singleChain);
         }
-        totalInfo.put("totalInfo",chainsInfo);
+        totalInfo.put("totalInfo", chainsInfo);
         querychainresp.setRet(ResultCode.SUCCESS);
         querychainresp.setData(totalInfo);
         System.out.println(totalInfo);
@@ -260,41 +291,146 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
                 e.printStackTrace();
             }
         } else if (portNumber.equals(liantongname)) {
-//            String targetUrl = "https://121.37.119.118:8443/api/baas/explorer/unicom/blockchains/4e8776c142f845e589bd00db6448d449/channels/ch1/blocks";
-//            String authorizationToken = chainreq.getAuthorizationToken();
-//
-//            String logs = "";
-//
-//            try {
-//                // 禁用 SSL 验证
-//                disableSSLVerification();
-//
-//                // 创建URL对象
-//                URL url = new URL(targetUrl);
-//                // 打开连接
-//                HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
-//                connection.setRequestMethod("GET");
-//
-//                // 设置Authorization头部
-//                connection.setRequestProperty("authorization", authorizationToken);
-//
-//                // 读取响应数据
-//                BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-//                String inputLine;
-//                StringBuilder response = new StringBuilder();
-//                while ((inputLine = in.readLine()) != null) {
-//                    response.append(inputLine);
-//                }
-//                in.close();
-//
-//                BigInteger height = JsonParser.parseString(response.toString()).getAsJsonObject()
-//                        .get("total_block_count").getAsBigInteger().subtract(BigInteger.valueOf(1));
-//                JSONObject heightinfo = new JSONObject();
-//                heightinfo.put("heightinfo", height);
-//                chainresp.setData(heightinfo);
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
+            // String targetUrl =
+            // "https://121.37.119.118:8443/api/baas/explorer/unicom/blockchains/4e8776c142f845e589bd00db6448d449/channels/ch1/blocks";
+            // String authorizationToken = chainreq.getAuthorizationToken();
+            //
+            // String logs = "";
+            //
+            // try {
+            // // 禁用 SSL 验证
+            // disableSSLVerification();
+            //
+            // // 创建URL对象
+            // URL url = new URL(targetUrl);
+            // // 打开连接
+            // HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+            // connection.setRequestMethod("GET");
+            //
+            // // 设置Authorization头部
+            // connection.setRequestProperty("authorization", authorizationToken);
+            //
+            // // 读取响应数据
+            // BufferedReader in = new BufferedReader(new
+            // InputStreamReader(connection.getInputStream()));
+            // String inputLine;
+            // StringBuilder response = new StringBuilder();
+            // while ((inputLine = in.readLine()) != null) {
+            // response.append(inputLine);
+            // }
+            // in.close();
+            //
+            // BigInteger height =
+            // JsonParser.parseString(response.toString()).getAsJsonObject()
+            // .get("total_block_count").getAsBigInteger().subtract(BigInteger.valueOf(1));
+            // JSONObject heightinfo = new JSONObject();
+            // heightinfo.put("heightinfo", height);
+            // chainresp.setData(heightinfo);
+            // } catch (IOException e) {
+            // e.printStackTrace();
+            // }
+            // } else if (portNumber.equals(fabricname)) {
+            // try {
+            // /* ====== 1. 证书路径（按你本机实际改） ====== */
+            // Path cryptoPath =
+            // Paths.get("D:\\桌面\\fabric-samples-main\\test-network\\organizations\\peerOrganizations\\org1.example.com");
+            // Path certFile =
+            // cryptoPath.resolve("users/User1@org1.example.com\\msp\\signcerts\\cert.pem");
+            // Path keyFile =
+            // cryptoPath.resolve("users/User1@org1.example.com\\msp\\keystore\\*_sk"); //
+            // 真实文件名
+            // Path tlsFile =
+            // cryptoPath.resolve("peers\\peer0.org1.example.com\\tls\\ca.crt");
+
+            // /* ====== 2. 构建 Identity（2.2.9 Wallet 入口） ====== */
+            // X509Certificate certificate =
+            // Identities.readX509Certificate(Files.newBufferedReader(certFile));
+            // PrivateKey privateKey =
+            // Identities.readPrivateKey(Files.newBufferedReader(keyFile));
+            // Wallet wallet = Wallets.newInMemoryWallet(); // 2.2.9 唯一入口
+            // wallet.put("user1", Identities.newX509Identity("Org1MSP", certificate,
+            // privateKey)); // 三参重载
+
+            // /* ====== 3. gRPC 连接 ====== */
+            // ManagedChannel channel = NettyChannelBuilder.forTarget(ipAddress + ":" +
+            // portNumber)
+            // .sslContext(GrpcSslContexts.forClient()
+            // .trustManager(tlsFile.toFile())
+            // .build())
+            // .overrideAuthority("peer0.org1.example.com")
+            // .build();
+
+            // /* ====== 4. 创建 Gateway（2.2.9 链式 Builder） ====== */
+            // try (Gateway gateway = Gateway.create()
+            // .wallet(wallet) // 2.2.9 推荐入口
+            // .identity("user1") // wallet 里别名
+            // .connection(channel)
+            // .evaluateOptions(o -> o.withDeadlineAfter(5, TimeUnit.SECONDS))
+            // .build()) {
+
+            // /* ====== 5. 查询最新区块高度 ====== */
+            // Network network = gateway.getNetwork("mychannel");
+            // BigInteger blockNumber = network.getBlockNumber(); // SDK 已封装
+
+            // JSONObject heightinfo = new JSONObject();
+            // heightinfo.put("heightinfo", blockNumber);
+            // chainresp.setData(heightinfo);
+
+            // } finally {
+            // channel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
+            // }
+
+            // } catch (Exception e) {
+            // e.printStackTrace();
+            // chainresp.setData("Error retrieving Fabric block height.");
+            // }
+            // }
+
+        } else if (portNumber.equals(fabricname)) {
+            try {
+                /* 1. 基础配置 */
+                String cryptoRoot  = System.getProperty("user.home")
+                                     + "/crosschain/fabric-samples-main/test-network";
+                String mspId       = "Org1MSP";
+                String channelName = "mychannel";
+        
+                /* 2. 路径 */
+                Path cryptoPath = Paths.get(cryptoRoot,
+                        "organizations/peerOrganizations/org1.example.com");
+                Path certFile = cryptoPath.resolve(
+                        "users/User1@org1.example.com/msp/signcerts/cert.pem");
+                Path keyDir   = cryptoPath.resolve(
+                        "users/User1@org1.example.com/msp/keystore");
+                Path tlsCert  = cryptoPath.resolve(
+                        "peers/peer0.org1.example.com/tls/ca.crt");
+        
+                /* 3. identity & signer */
+                Identity identity = newIdentity(certFile, mspId);
+                Signer   signer   = newSigner(keyDir);
+        
+                /* 4. gRPC 连接 */
+                ManagedChannel channel = newGrpcConnection(tlsCert);
+                try {
+                    Gateway gateway = Gateway.newInstance()
+                            .identity(identity)
+                            .signer(signer)
+                            .connection(channel)
+                            .evaluateOptions(o -> o.withDeadlineAfter(5, TimeUnit.SECONDS))
+                            .connect();
+        
+                    /* 5. 查链高 */
+                    long height = gateway.getNetwork(channelName).getBlockNumber();
+        
+                    chainresp.setData(new JSONObject().put("height", height));
+        
+                } finally {
+                    channel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
+                }
+        
+            } catch (Exception e) {
+                e.printStackTrace();
+                chainresp.setData("Error retrieving Fabric block height: " + e.getMessage());
+            }
         }
 
         return chainresp;
@@ -577,10 +713,77 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
             System.out.println("-------联通链区块信息查询完毕-------");
         }
 
+    else if (portNumber.equals(fabricname)) {
+            String configPath = "D:\\桌面\\fabric-samples-main\\test-network";
+            String userName   = "User1@org1.example.com";
+            String mspId      = "Org1MSP";
+            String channelId  = "mychannel";
+
+            Path cryptoDir = Paths.get(configPath,
+                    "organizations", "peerOrganizations", "org1.example.com");
+            Path certFile = cryptoDir.resolve(
+                    "users\\User1@org1.example.com\\msp\\signcerts\\cert.pem");
+            Path keyDir   = cryptoDir.resolve(
+                    "users\\User1@org1.example.com\\msp\\keystore");
+            Path keyFile = null;
+            try {
+                keyFile = Files.list(keyDir)          // 可能抛 IOException
+                            .findFirst()
+                            .orElse(null);
+            } catch (IOException e) {
+                e.printStackTrace();
+                queryBlockInfoResp.setData("Fabric key file not found");
+                return queryBlockInfoResp;
+            }
+            if (keyFile == null) {
+                queryBlockInfoResp.setData("Fabric key file not found");
+                return queryBlockInfoResp;
+            }
+
+            try {
+                /* 1. 内存钱包 */
+                X509Certificate cert = Identities.readX509Certificate(
+                        Files.newBufferedReader(certFile));
+                PrivateKey key = Identities.readPrivateKey(
+                        Files.newBufferedReader(keyFile));
+                Wallet wallet = Wallets.newInMemoryWallet();
+                wallet.put(userName, Identities.newX509Identity(mspId, cert, key));
+
+                /* 2. 连接网关 */
+                Gateway gateway = Gateway.createBuilder()
+                        .identity(wallet, userName)
+                        .networkConfig(Paths.get(configPath, "connection.yaml"))
+                        .discovery(true)
+                        .connect();
+
+                /* 3. 拿到 Channel 对象（SDK 级别） */
+                Channel channel = gateway.getNetwork(channelId).getChannel();
+
+                /* 4. 按高度查区块（qscc） */
+                long blockNo = Long.parseLong(blockheightReq.getBlockHEIGHT());
+                BlockInfo block = channel.queryBlockByNumber(blockNo); 
+                /* 5. 封装统一格式 */
+                JSONObject blockInfo = new JSONObject();
+                blockInfo.put("blockHeight", block.getBlockNumber());
+                blockInfo.put("blockHash", Hex.encodeHexString(block.getDataHash()));
+                blockInfo.put("previousHash", Hex.encodeHexString(block.getPreviousHash()));
+                blockInfo.put("transactionCount", block.getTransactionCount());
+                queryBlockInfoResp.setRet(ResultCode.SUCCESS);
+                queryBlockInfoResp.setData(blockInfo);
+
+                gateway.close();
+                System.out.println("-------Fabric区块信息查询完毕-------");
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                queryBlockInfoResp.setData("Fabric query failed: " + e.getMessage());
+            }
+        }
         return queryBlockInfoResp;
     }
+
     /*
-        zzy fake data added
+     * zzy fake data added
      */
     public CommonResp checkNewBlock(ChainReq chainreq) {
         CommonResp queryNewBlock = new CommonResp();
@@ -599,14 +802,15 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
         if (portNumber.equals(CrosschainInfo.ETH.ChainPort)) {
             BigInteger blockHeight = new BigInteger("0");
             // Fake data
-            if (!BlockchainConfig.do_update_blockchain){
-                for (int i = 1000;i<1000+topN;i++){
+            if (!BlockchainConfig.do_update_blockchain) {
+                for (int i = 1000; i < 1000 + topN; i++) {
                     JSONObject blockInfo = new JSONObject();
                     blockInfo.put("blockHeight", i);
                     blockInfo.put("timestamp", 1704358265);
                     blockInfo.put("blockSize", 610);
                     blockInfo.put("transactionCount", 0);
-                    blockInfo.put("previousBlockAddress", "0x685968c1ba6b5cff8ce01e38eae130234bf6256c9cdbfdab3d31231f53ca9304");
+                    blockInfo.put("previousBlockAddress",
+                            "0x685968c1ba6b5cff8ce01e38eae130234bf6256c9cdbfdab3d31231f53ca9304");
                     blockInfo.put("gasLimit", "26771921328");
                     blockInfo.put("gasUsed", "0");
                     blockInfo.put("stateRoot", "0xccad9fe6165ff1175b4a9d0daafb459d4a180371960ffd418a064a0ba6ee452c");
@@ -715,8 +919,8 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
         } else if (portNumber.equals(CrosschainInfo.CMK.ChainPort)) {
             String logs = "";
 
-            if (!BlockchainConfig.do_update_blockchain){
-                for (int i = 1000;i<1000+topN;i++){
+            if (!BlockchainConfig.do_update_blockchain) {
+                for (int i = 1000; i < 1000 + topN; i++) {
                     JSONObject blockInfo = new JSONObject();
                     blockInfo.put("blockHeight", i);
                     blockInfo.put("blockHash", "G1AO3fU44Yh+O3SaE5Ltyw4+8KC0n3COaRLaiznT2Ag=");
@@ -725,8 +929,10 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
                     blockInfo.put("transactionCount", 1);
                     blockInfo.put("previousBlockHash", "8pV7EzTlL8diFPKYFXUA0TR4n1tKYYtqnp8hQ4HrV4w=");
                     blockInfo.put("rwSetRoot", "zBfmFxBQMw0/tNxGsIfpL66Af1rX+4pBN8v4JSOFqZc=");
-                    blockInfo.put("proposerMemberInfo", "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUNmakNDQWlTZ0F3SUJBZ0lERHkvNk1Bb0dDQ3FHU000OUJBTUNNSUdLTVFzd0NRWURWUVFHRXdKRFRqRVEKTUE0R0ExVUVDQk1IUW1WcGFtbHVaekVRTUE0R0ExVUVCeE1IUW1WcGFtbHVaekVmTUIwR0ExVUVDaE1XZDNndApiM0puTkM1amFHRnBibTFoYTJWeUxtOXlaekVTTUJBR0ExVUVDeE1KY205dmRDMWpaWEowTVNJd0lBWURWUVFECkV4bGpZUzUzZUMxdmNtYzBMbU5vWVdsdWJXRnJaWEl1YjNKbk1CNFhEVEl6TURjeE5EQXlNek14TjFvWERUSTQKTURjeE1qQXlNek14TjFvd2daY3hDekFKQmdOVkJBWVRBa05PTVJBd0RnWURWUVFJRXdkQ1pXbHFhVzVuTVJBdwpEZ1lEVlFRSEV3ZENaV2xxYVc1bk1SOHdIUVlEVlFRS0V4WjNlQzF2Y21jMExtTm9ZV2x1YldGclpYSXViM0puCk1SSXdFQVlEVlFRTEV3bGpiMjV6Wlc1emRYTXhMekF0QmdOVkJBTVRKbU52Ym5ObGJuTjFjekV1YzJsbmJpNTMKZUMxdmNtYzBMbU5vWVdsdWJXRnJaWEl1YjNKbk1Ga3dFd1lIS29aSXpqMENBUVlJS29aSXpqMERBUWNEUWdBRQpDaVQ5VnQ3RGpLN0U5aEphSmVZNi9TV1dzZ01rQlR4VHM4Y2pvWUt1WGlpRENCcjErNS9VcWN4bHova292MGFOCnIxaVFxTExCRlJvUzA5VGJ2azNvSnFOcU1HZ3dEZ1lEVlIwUEFRSC9CQVFEQWdiQU1Da0dBMVVkRGdRaUJDQysKODFjeDB1Rk1QQUxoZ0xMMndnL1lvdnh6SDVud3JnUlhLTjVKWXh4TDJqQXJCZ05WSFNNRUpEQWlnQ0JrcWZUSwpGTjlRdzRCVW1SQWtmZXBJd0RrYTZYV0lUcHh4UGY1b2lqRVR2akFLQmdncWhrak9QUVFEQWdOSUFEQkZBaUJ6CkVJVGJ0SnQyOGw2Qzd1Rk9oK2hsY0NUYTd6dDNGRkdtSDlXMitISU5zUUloQU10YjNQdEh0VGtRWFBrRXdGZmsKRjZZK1pTQnRyc0UzQkpDU3VCUk8zbWh5Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K");
-                    blockInfo.put("signature", "MEYCIQCVeUfSpXt0uLExeI7hlIXYc1gXntDCq2kUjTqcWxWEhAIhAMgeV/E3xfb86F5sK6J9vwO9Ow6SBt/l/ZUz2Lwakt5g");
+                    blockInfo.put("proposerMemberInfo",
+                            "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUNmakNDQWlTZ0F3SUJBZ0lERHkvNk1Bb0dDQ3FHU000OUJBTUNNSUdLTVFzd0NRWURWUVFHRXdKRFRqRVEKTUE0R0ExVUVDQk1IUW1WcGFtbHVaekVRTUE0R0ExVUVCeE1IUW1WcGFtbHVaekVmTUIwR0ExVUVDaE1XZDNndApiM0puTkM1amFHRnBibTFoYTJWeUxtOXlaekVTTUJBR0ExVUVDeE1KY205dmRDMWpaWEowTVNJd0lBWURWUVFECkV4bGpZUzUzZUMxdmNtYzBMbU5vWVdsdWJXRnJaWEl1YjNKbk1CNFhEVEl6TURjeE5EQXlNek14TjFvWERUSTQKTURjeE1qQXlNek14TjFvd2daY3hDekFKQmdOVkJBWVRBa05PTVJBd0RnWURWUVFJRXdkQ1pXbHFhVzVuTVJBdwpEZ1lEVlFRSEV3ZENaV2xxYVc1bk1SOHdIUVlEVlFRS0V4WjNlQzF2Y21jMExtTm9ZV2x1YldGclpYSXViM0puCk1SSXdFQVlEVlFRTEV3bGpiMjV6Wlc1emRYTXhMekF0QmdOVkJBTVRKbU52Ym5ObGJuTjFjekV1YzJsbmJpNTMKZUMxdmNtYzBMbU5vWVdsdWJXRnJaWEl1YjNKbk1Ga3dFd1lIS29aSXpqMENBUVlJS29aSXpqMERBUWNEUWdBRQpDaVQ5VnQ3RGpLN0U5aEphSmVZNi9TV1dzZ01rQlR4VHM4Y2pvWUt1WGlpRENCcjErNS9VcWN4bHova292MGFOCnIxaVFxTExCRlJvUzA5VGJ2azNvSnFOcU1HZ3dEZ1lEVlIwUEFRSC9CQVFEQWdiQU1Da0dBMVVkRGdRaUJDQysKODFjeDB1Rk1QQUxoZ0xMMndnL1lvdnh6SDVud3JnUlhLTjVKWXh4TDJqQXJCZ05WSFNNRUpEQWlnQ0JrcWZUSwpGTjlRdzRCVW1SQWtmZXBJd0RrYTZYV0lUcHh4UGY1b2lqRVR2akFLQmdncWhrak9QUVFEQWdOSUFEQkZBaUJ6CkVJVGJ0SnQyOGw2Qzd1Rk9oK2hsY0NUYTd6dDNGRkdtSDlXMitISU5zUUloQU10YjNQdEh0VGtRWFBrRXdGZmsKRjZZK1pTQnRyc0UzQkpDU3VCUk8zbWh5Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K");
+                    blockInfo.put("signature",
+                            "MEYCIQCVeUfSpXt0uLExeI7hlIXYc1gXntDCq2kUjTqcWxWEhAIhAMgeV/E3xfb86F5sK6J9vwO9Ow6SBt/l/ZUz2Lwakt5g");
                     blockInfo.put("txRoot", "C2N9i0LSm49vwEyyHWTu9G5zeHm0tpXXwVNn9PN+/2w=");
                     blocks.add(blockInfo);
                 }
@@ -800,19 +1006,24 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
             System.out.println("-------ChainMaker最新十个区块信息查询完毕-------");
         } else if (portNumber.equals(CrosschainInfo.H2C.ChainPort)) {
 
-            if (!BlockchainConfig.do_update_blockchain){
-                for (int i = 1000;i<1000+topN;i++){
+            if (!BlockchainConfig.do_update_blockchain) {
+                for (int i = 1000; i < 1000 + topN; i++) {
                     JSONObject blockInfo = new JSONObject();
                     blockInfo.put("blockHeight", i);
                     blockInfo.put("blockHash", "7b3c09a47df76ff4038f5e0eeadf2c297523be60e1297fe95ff49f2ebb6e93c7");
                     blockInfo.put("timeStamp", "2024-06-03T06:38:04.6022327Z");
                     blockInfo.put("blockSize", 1000);
                     blockInfo.put("transactionCount", 2);
-                    blockInfo.put("previousBlockHash", "18c4d913ead7141b7e384e839e73af589a646320ce36bde2d3f64494a453fa31");
-                    blockInfo.put("merkleTreeRootOfWorldState", "1480da1a74d0e1e2c12dfe3ca5d1340dedb3b1da7c12144bdfb180dda2ea7a09");
-                    blockInfo.put("merkleTreeRootOfTransactions", "0ce2bd745a9272b1fcf74f93af9d37c403a4fe7d0d134170e673f030ce1dfa18");
-                    blockInfo.put("merkleTreeRootOfTransactionState", "a06f9852bc672980fd197ac424eac1116e51cdf891d11fa5dc472827d1521d1b");
-                    blockInfo.put("signerPubkey", "0485fa02af56f8f47b8e69197b8d7493e680fc5c64f34fe205e297754ac854656c7609644e1dad02858222c3d043f519cd6bbb065c8547566caeb80f79c087ba18");
+                    blockInfo.put("previousBlockHash",
+                            "18c4d913ead7141b7e384e839e73af589a646320ce36bde2d3f64494a453fa31");
+                    blockInfo.put("merkleTreeRootOfWorldState",
+                            "1480da1a74d0e1e2c12dfe3ca5d1340dedb3b1da7c12144bdfb180dda2ea7a09");
+                    blockInfo.put("merkleTreeRootOfTransactions",
+                            "0ce2bd745a9272b1fcf74f93af9d37c403a4fe7d0d134170e673f030ce1dfa18");
+                    blockInfo.put("merkleTreeRootOfTransactionState",
+                            "a06f9852bc672980fd197ac424eac1116e51cdf891d11fa5dc472827d1521d1b");
+                    blockInfo.put("signerPubkey",
+                            "0485fa02af56f8f47b8e69197b8d7493e680fc5c64f34fe205e297754ac854656c7609644e1dad02858222c3d043f519cd6bbb065c8547566caeb80f79c087ba18");
                     blocks.add(blockInfo);
                 }
                 System.out.println("-------H2Chain最新十个区块信息查询完毕-------");
@@ -900,12 +1111,14 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
         } else if (portNumber.equals(CrosschainInfo.BuB.ChainPort)) {
             BigInteger height = new BigInteger("0");
             if (!BlockchainConfig.do_update_blockchain) {
-                for (int i = 1000;i<1000+topN;i++) {
+                for (int i = 1000; i < 1000 + topN; i++) {
                     JSONObject blockInfo = new JSONObject();
                     blockInfo.put("blockHeight", i);
-                    blockInfo.put("accountTreeHash", "5ac1e2a07e9b307bae593ea25304ef5bc9e0194d029166209081fed636a11c99");
+                    blockInfo.put("accountTreeHash",
+                            "5ac1e2a07e9b307bae593ea25304ef5bc9e0194d029166209081fed636a11c99");
                     blockInfo.put("closeTime", "1741055502664394");
-                    blockInfo.put("consensusValueHash", "ec53a7a19defe45807bf64d293f27e5f08af26bf938b8080a0ac4a9113a03a24");
+                    blockInfo.put("consensusValueHash",
+                            "ec53a7a19defe45807bf64d293f27e5f08af26bf938b8080a0ac4a9113a03a24");
                     blockInfo.put("feesHash", "916daa78d264b3e2d9cff8aac84c943a834f49a62b7354d4fa228dab65515313");
                     blockInfo.put("hash", "acf3b87e82406ec8a83a5da8f57d49e2bbd43d0656794e601af9075c909b9327");
                     blockInfo.put("previousHash", "504ca3084b68bbdcfd29821a9d9df6a23a86fd3ddf0770bbbb90caf0ee657e79");
@@ -990,130 +1203,141 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
             }
             System.out.println("-------BuBi最新十个区块信息查询完毕-------");
         } else if (portNumber.equals(liantongname)) {
-//            String targetUrl = "https://121.37.119.118:8443/api/baas/explorer/unicom/blockchains/4e8776c142f845e589bd00db6448d449/channels/ch1/blocks";
-//            String authorizationToken = chainreq.getAuthorizationToken();
-//
-//            String logs = "";
-//
-//            BigInteger height = new BigInteger("0");
-//            try {
-//                // 禁用 SSL 验证
-//                disableSSLVerification();
-//
-//                // 创建URL对象
-//                URL url = new URL(targetUrl);
-//                // 打开连接
-//                HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
-//                connection.setRequestMethod("GET");
-//
-//                // 设置Authorization头部
-//                connection.setRequestProperty("authorization", authorizationToken);
-//
-//                // 读取响应数据
-//                BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-//                String inputLine;
-//                StringBuilder response = new StringBuilder();
-//                while ((inputLine = in.readLine()) != null) {
-//                    response.append(inputLine);
-//                }
-//                in.close();
-//
-//                height = JsonParser.parseString(response.toString()).getAsJsonObject()
-//                        .get("total_block_count").getAsBigInteger().subtract(BigInteger.valueOf(1));
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//
-//            targetUrl = "https://121.37.119.118:8443/api/baas/explorer/unicom/blockchains/4e8776c142f845e589bd00db6448d449/channels/ch1/blocks?start_block_num="
-//                    + height + "&block_count=10";
-//            try {
-//                // 禁用 SSL 验证
-//                disableSSLVerification();
-//
-//                // 创建URL对象
-//                URL url = new URL(targetUrl);
-//                // 打开连接
-//                HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
-//                connection.setRequestMethod("GET");
-//
-//                // 设置Authorization头部
-//                connection.setRequestProperty("authorization", authorizationToken);
-//
-//                // 读取响应数据
-//                BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-//                String inputLine;
-//                StringBuilder response = new StringBuilder();
-//                while ((inputLine = in.readLine()) != null) {
-//                    response.append(inputLine);
-//                }
-//                in.close();
-//
-//                logs = response.toString();
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//            BigInteger totalNumber = JsonParser.parseString(logs).getAsJsonObject().get("block_count")
-//                    .getAsBigInteger();
-//            for (BigInteger i = BigInteger.valueOf(0); i.compareTo(totalNumber) < 0; i = i.add(BigInteger.ONE)) {
-//                JsonObject rawBlock = JsonParser.parseString(logs).getAsJsonObject().getAsJsonArray("blocks")
-//                        .get(i.intValue())
-//                        .getAsJsonObject();
-//                String channelName = rawBlock.get("channel_name").getAsString();
-//                String hash = rawBlock.get("hash").getAsString();
-//                BigInteger number = rawBlock.get("number").getAsBigInteger();
-//                String dataHash = rawBlock.get("data_hash").getAsString();
-//                String previousHash = rawBlock.get("previous_hash").getAsString();
-//                String nextHash = rawBlock.get("next_hash").getAsString();
-//                if (nextHash.equals(""))
-//                    nextHash = "null";
-//                BigInteger lastConfigIndex = rawBlock.get("last_config_index").getAsBigInteger();
-//                BigInteger txCount = rawBlock.get("tx_count").getAsBigInteger();
-//                String createdAt = rawBlock.get("created_at").getAsString();
-//
-//                JSONObject blockInfo = new JSONObject();
-//                blockInfo.put("channelName", channelName);
-//                blockInfo.put("hash", hash);
-//                blockInfo.put("number", number);
-//                blockInfo.put("dataHash", dataHash);
-//                blockInfo.put("previousHash", previousHash);
-//                blockInfo.put("nextHash", nextHash);
-//                blockInfo.put("lastConfigIndex", lastConfigIndex);
-//                blockInfo.put("txCount", txCount);
-//                blockInfo.put("createdAt", createdAt);
-//                blocks.add(blockInfo);
-//            }
-//
-//            System.out.println("-------联通链最新十个区块信息查询完毕-------");
-        } else if (portNumber.equals(CrosschainInfo.FBC.ChainPort)){
+            // String targetUrl =
+            // "https://121.37.119.118:8443/api/baas/explorer/unicom/blockchains/4e8776c142f845e589bd00db6448d449/channels/ch1/blocks";
+            // String authorizationToken = chainreq.getAuthorizationToken();
+            //
+            // String logs = "";
+            //
+            // BigInteger height = new BigInteger("0");
+            // try {
+            // // 禁用 SSL 验证
+            // disableSSLVerification();
+            //
+            // // 创建URL对象
+            // URL url = new URL(targetUrl);
+            // // 打开连接
+            // HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+            // connection.setRequestMethod("GET");
+            //
+            // // 设置Authorization头部
+            // connection.setRequestProperty("authorization", authorizationToken);
+            //
+            // // 读取响应数据
+            // BufferedReader in = new BufferedReader(new
+            // InputStreamReader(connection.getInputStream()));
+            // String inputLine;
+            // StringBuilder response = new StringBuilder();
+            // while ((inputLine = in.readLine()) != null) {
+            // response.append(inputLine);
+            // }
+            // in.close();
+            //
+            // height = JsonParser.parseString(response.toString()).getAsJsonObject()
+            // .get("total_block_count").getAsBigInteger().subtract(BigInteger.valueOf(1));
+            // } catch (IOException e) {
+            // e.printStackTrace();
+            // }
+            //
+            // targetUrl =
+            // "https://121.37.119.118:8443/api/baas/explorer/unicom/blockchains/4e8776c142f845e589bd00db6448d449/channels/ch1/blocks?start_block_num="
+            // + height + "&block_count=10";
+            // try {
+            // // 禁用 SSL 验证
+            // disableSSLVerification();
+            //
+            // // 创建URL对象
+            // URL url = new URL(targetUrl);
+            // // 打开连接
+            // HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+            // connection.setRequestMethod("GET");
+            //
+            // // 设置Authorization头部
+            // connection.setRequestProperty("authorization", authorizationToken);
+            //
+            // // 读取响应数据
+            // BufferedReader in = new BufferedReader(new
+            // InputStreamReader(connection.getInputStream()));
+            // String inputLine;
+            // StringBuilder response = new StringBuilder();
+            // while ((inputLine = in.readLine()) != null) {
+            // response.append(inputLine);
+            // }
+            // in.close();
+            //
+            // logs = response.toString();
+            // } catch (IOException e) {
+            // e.printStackTrace();
+            // }
+            // BigInteger totalNumber =
+            // JsonParser.parseString(logs).getAsJsonObject().get("block_count")
+            // .getAsBigInteger();
+            // for (BigInteger i = BigInteger.valueOf(0); i.compareTo(totalNumber) < 0; i =
+            // i.add(BigInteger.ONE)) {
+            // JsonObject rawBlock =
+            // JsonParser.parseString(logs).getAsJsonObject().getAsJsonArray("blocks")
+            // .get(i.intValue())
+            // .getAsJsonObject();
+            // String channelName = rawBlock.get("channel_name").getAsString();
+            // String hash = rawBlock.get("hash").getAsString();
+            // BigInteger number = rawBlock.get("number").getAsBigInteger();
+            // String dataHash = rawBlock.get("data_hash").getAsString();
+            // String previousHash = rawBlock.get("previous_hash").getAsString();
+            // String nextHash = rawBlock.get("next_hash").getAsString();
+            // if (nextHash.equals(""))
+            // nextHash = "null";
+            // BigInteger lastConfigIndex =
+            // rawBlock.get("last_config_index").getAsBigInteger();
+            // BigInteger txCount = rawBlock.get("tx_count").getAsBigInteger();
+            // String createdAt = rawBlock.get("created_at").getAsString();
+            //
+            // JSONObject blockInfo = new JSONObject();
+            // blockInfo.put("channelName", channelName);
+            // blockInfo.put("hash", hash);
+            // blockInfo.put("number", number);
+            // blockInfo.put("dataHash", dataHash);
+            // blockInfo.put("previousHash", previousHash);
+            // blockInfo.put("nextHash", nextHash);
+            // blockInfo.put("lastConfigIndex", lastConfigIndex);
+            // blockInfo.put("txCount", txCount);
+            // blockInfo.put("createdAt", createdAt);
+            // blocks.add(blockInfo);
+            // }
+            //
+            // System.out.println("-------联通链最新十个区块信息查询完毕-------");
+        } else if (portNumber.equals(CrosschainInfo.FBC.ChainPort)) {
             if (!BlockchainConfig.do_update_blockchain) {
-                for (int i = 1000;i<1000+topN;i++) {
+                for (int i = 1000; i < 1000 + topN; i++) {
                     JSONObject blockInfo = new JSONObject();
                     blockInfo.put("gasLimit", "0x0");
                     blockInfo.put("gasUsed", "0x0");
-                    blockInfo.put("hash", "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
+                    blockInfo.put("hash",
+                            "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
                     blockInfo.put("number", i);
                     blockInfo.put("parentHash", "0xeccad5274949b9d25996f7a96b89c0ac5c099eb9b72cc00d65bc6ef09f7bd10b");
                     blockInfo.put("sealer", "0x0");
 
-                    String[] stringArray = {"0471101bcf033cd9e0cbd6eef76c144e6eff90a7a0b1847b5976f8ba32b2516c0528338060a4599fc5e3bafee188bca8ccc529fbd92a760ef57ec9a14e9e4278",
+                    String[] stringArray = {
+                            "0471101bcf033cd9e0cbd6eef76c144e6eff90a7a0b1847b5976f8ba32b2516c0528338060a4599fc5e3bafee188bca8ccc529fbd92a760ef57ec9a14e9e4278",
                             "2b08375e6f876241b2a1d495cd560bd8e43265f57dc9ed07254616ea88e371dfa6d40d9a702eadfd5e025180f9d966a67f861da214dd36237b58d72aaec2e108",
                             "cf93054cf524f51c9fe4e9a76a50218aaa7a2ca6e58f6f5634f9c2884d2e972486c7fe1d244d4b49c6148c1cb524bcc1c99ee838bb9dd77eb42f557687310ebd",
-                            "ed1c85b815164b31e895d3f4fc0b6e3f0a0622561ec58a10cc8f3757a73621292d88072bf853ac52f0a9a9bbb10a54bdeef03c3a8a42885fe2467b9d13da9dec"};
+                            "ed1c85b815164b31e895d3f4fc0b6e3f0a0622561ec58a10cc8f3757a73621292d88072bf853ac52f0a9a9bbb10a54bdeef03c3a8a42885fe2467b9d13da9dec" };
                     List<String> stringList = Arrays.asList(stringArray);
                     JSONArray s = new JSONArray(stringList);
 
                     blockInfo.put("sealerList", s);
                     blockInfo.put("stateRoot", "0x9711819153f7397ec66a78b02624f70a343b49c60bc2f21a77b977b0ed91cef9");
                     blockInfo.put("timestamp", "0x1692f119c84");
-                    blockInfo.put("transactionsRoot","0x516787f85980a86fd04b0e9ce82a1a75950db866e8cdf543c2cae3e4a51d91b7");
+                    blockInfo.put("transactionsRoot",
+                            "0x516787f85980a86fd04b0e9ce82a1a75950db866e8cdf543c2cae3e4a51d91b7");
 
-                    String[] txArray = {"0xa14638d47cc679cf6eeb7f36a6d2a30ea56cb8dcf0938719ff45023a7a8edb5d",
+                    String[] txArray = { "0xa14638d47cc679cf6eeb7f36a6d2a30ea56cb8dcf0938719ff45023a7a8edb5d",
                             "0xa14638d47cc679cf6eeb7f36a6d2a30ea56cb8dcf0938719ff45023a7a8edb5d"
                     };
                     List<String> txList = Arrays.asList(txArray);
                     JSONArray txs = new JSONArray(txList);
 
-                    blockInfo.put("transactions",txs);
+                    blockInfo.put("transactions", txs);
                     blocks.add(blockInfo);
                 }
                 System.out.println("-------Fisco Bcos最新十个区块信息查询完毕-------");
@@ -1123,9 +1347,9 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
                 queryNewBlock.setData(tenblocks);
                 return queryNewBlock;
             }
-        }else if(portNumber.equals(CrosschainInfo.FAB.ChainPort)){
+        } else if (portNumber.equals(CrosschainInfo.FAB.ChainPort)) {
             if (!BlockchainConfig.do_update_blockchain) {
-                for (int i = 1000;i<1000+topN;i++) {
+                for (int i = 1000; i < 1000 + topN; i++) {
                     JSONObject blockInfo = new JSONObject();
                     blockInfo.put("BlockNumber", i);
                     blockInfo.put("BlockHash", "56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b");
@@ -1195,14 +1419,14 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
         String ipAddress = txhashreq.getChainIP().substring(0, colonIndex);
         String portNumber = txhashreq.getChainIP().substring(colonIndex + 1);
 
-        QueryWrapper<Chain> wrapper = new QueryWrapper<>();
-        wrapper.select("chain_type");
-        wrapper.eq("ip_address", ipAddress);
-        wrapper.eq("port", portNumber);
-        Chain chain = chainMapper.selectOne(wrapper);
-        String chainType = chain.getChainType();
+        // QueryWrapper<Chain> wrapper = new QueryWrapper<>();
+        // wrapper.select("chain_type");
+        // wrapper.eq("ip_address", ipAddress);
+        // wrapper.eq("port", portNumber);
+        // Chain chain = chainMapper.selectOne(wrapper);
+        // String chainType = chain.getChainType();
 
-        if (chainType.equals(ethname)) {
+        if (portNumber.equals(ethname)) {
             Web3j web3j = Web3j.build(new HttpService("http://" + txhashreq.getChainIP()));
             try {
 
@@ -1237,7 +1461,7 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
                 queryTxInfoResp.setData("Failed to connect to the blockchain node.");
             }
             System.out.println("-------ETH交易信息查询完毕-------");
-        } else if (chainType.equals(chainmakername)) {
+        } else if (portNumber.equals(chainmakername)) {
             String logs = "";
             try {
                 SSHConfig.connect(ipAddress);
@@ -1280,7 +1504,82 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
             queryTxInfoResp.setData(txInfo);
 
             System.out.println("-------ChainMaker交易信息查询完毕-------");
-        } else {
+        }else if (portNumber.equals(fabricname)) {
+            /* ==========  0. 固定配置  ========== */
+            String configPath = "D:\\桌面\\fabric-samples-main\\test-network";
+            String userName   = "User1@org1.example.com";
+            String mspId      = "Org1MSP";
+            String channelId  = "mychannel";
+        
+            /* ==========  1. 证书/密钥路径  ========== */
+            Path cryptoDir = Paths.get(configPath,
+                    "organizations", "peerOrganizations", "org1.example.com");
+            Path certFile = cryptoDir.resolve(
+                    "users\\User1@org1.example.com\\msp\\signcerts\\cert.pem");
+            Path keyDir   = cryptoDir.resolve(
+                    "users\\User1@org1.example.com\\msp\\keystore");
+            Path keyFile;
+            try {
+                keyFile = Files.list(keyDir).findFirst().orElse(null);
+            } catch (IOException e) {
+                queryTxInfoResp.setData("Fabric key file not found");
+                return queryTxInfoResp;
+            }
+            if (keyFile == null) {
+                queryTxInfoResp.setData("Fabric key file not found");
+                return queryTxInfoResp;
+            }
+        
+            try {
+                /* 2. 内存 Wallet */
+                X509Certificate cert = Identities.readX509Certificate(
+                        Files.newBufferedReader(certFile));
+                PrivateKey key = Identities.readPrivateKey(
+                        Files.newBufferedReader(keyFile));
+                Wallet wallet = Wallets.newInMemoryWallet();
+                wallet.put(userName, Identities.newX509Identity(mspId, cert, key));
+        
+                /* 3. Gateway 连接 */
+                Gateway gateway = Gateway.createBuilder()
+                        .identity(wallet, userName)
+                        .networkConfig(Paths.get(configPath, "connection.yaml"))
+                        .discovery(true)
+                        .connect();
+        
+                /* 4. 获取 Channel 对象（SDK 级） */
+                Channel channel = gateway.getNetwork(channelId).getChannel();
+        
+                // 5. 用 qscc 查交易所在区块
+                String txId = txhashreq.getTxHASH();
+                long blockNo = channel.queryBlockByTransactionID(txId).getBlockNumber(); // 2.2.9 有这个方法
+                BlockInfo block = channel.queryBlockByNumber(blockNo);
+
+                // 6. 封装（2.2.9 只能拿到这些）
+                JSONObject txInfo = new JSONObject();
+                txInfo.put("txHash", txId);
+                txInfo.put("blockNumber", BigInteger.valueOf(blockNo));
+                txInfo.put("blockHash", Hex.encodeHexString(block.getDataHash()));
+                txInfo.put("from", "");                  // 2.2.9 拿不到 creator
+                txInfo.put("to", "");
+                txInfo.put("contractName", "");          // 2.2.9 拿不到链码名
+                txInfo.put("method", "");
+                txInfo.put("signature", "");             // 2.2.9 拿不到签名
+                txInfo.put("timeStamp", "");             // 2.2.9 拿不到时间戳
+                txInfo.put("status", "VALID");           // 2.2.9 也拿不到验证位，直接写 VALID
+
+                queryTxInfoResp.setRet(ResultCode.SUCCESS);
+                queryTxInfoResp.setData(txInfo);
+                        
+                gateway.close();
+                System.out.println("-------Fabric交易信息查询完毕-------");
+        
+            } catch (Exception e) {
+                e.printStackTrace();
+                queryTxInfoResp.setData("Fabric query failed: " + e.getMessage());
+            }
+        } 
+        
+        else {
             String targetUrl = "http://" + ipAddress + ":8000/api/blockChain/transactionResult?transactionId="
                     + txhashreq.getTxHASH();
 
@@ -1340,7 +1639,7 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
 
             System.out.println("-------H2Chain交易信息查询完毕-------");
         }
-
+        
         return queryTxInfoResp;
     }
 

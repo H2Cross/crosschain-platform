@@ -360,11 +360,25 @@
         </dependency>
 
 
+		<dependency>
+			<groupId>org.hyperledger.fabric</groupId>
+			<artifactId>fabric-gateway-java</artifactId>
+			<version>1.8.0</version>
+		</dependency>
+
     </dependencies>
 	<repositories>
 		<repository>
 			<id>jitpack.io</id>
 			<url>https://jitpack.io</url>
+		</repository>
+		<repository>
+			<id>maven-central</id>
+			<url>https://repo1.maven.org/maven2/</url>
+		</repository>
+		<repository>
+			<id>google-maven-central</id>
+			<url>https://maven.google.com/</url>
 		</repository>
 	</repositories>
 	<build>
