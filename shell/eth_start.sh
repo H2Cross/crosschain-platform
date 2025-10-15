@@ -5,7 +5,7 @@ source /etc/profile
 source ~/.bashrc
 
 # 1. 定义变量
-REPO_DIR="/root/CIPS-Gemini-Ethereum"
+REPO_DIR="/root/CIPS-Gemini-v1/CIPS-Gemini-Ethereum"
 LOG_DIR="$REPO_DIR/logs"
 LOG_FILE="$LOG_DIR/eth.log"
 GATEWAY_PID_FILE="/tmp/eth_gateway.pid"

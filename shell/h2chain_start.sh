@@ -16,7 +16,7 @@ fi
 DST_CHAIN_ID=$1
 
 # 3. 定义变量
-H2CHAIN_DIR=/root/CIPS-Gemini-H2Chain
+H2CHAIN_DIR=/root/CIPS-Gemini-v1/CIPS-Gemini-H2Chain
 CONFIG_FILE="$H2CHAIN_DIR/config.yml"
 LOG_DIR="$H2CHAIN_DIR/logs"
 LOG_FILE="$LOG_DIR/h2chain.log"

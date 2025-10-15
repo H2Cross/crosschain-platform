@@ -18,7 +18,7 @@ IP=$2
 PORT=$3
 
 # 3. 定义变量
-REPO_DIR=/root/CIPS-Gemini-ChainMaker
+REPO_DIR=/root/CIPS-Gemini-v1/CIPS-Gemini-ChainMaker
 TARGET_FILE="$REPO_DIR/relayer/tests/test_transport.go"
 NEW_URL="http://$IP:$PORT"
 LOG_DIR="$REPO_DIR/logs"

@@ -544,7 +544,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
 
                     // 执行以太坊跨链命令
                     String ethCmd = String.format(
-                            "source /etc/profile && source ~/.bashrc && cd ~/CIPS-Gemini-Ethereum && ./helper.sh SendCCMsg ws://127.0.0.1:10026 contract_addresses_%d.toml %d 1 1",
+                            "source /etc/profile && source ~/.bashrc && cd ~/CIPS-Gemini-v1/CIPS-Gemini-Ethereum && ./helper.sh SendCCMsg ws://127.0.0.1:10026 contract_addresses_%d.toml %d 1 1",
                             srcChainId, getChainId(dstChainType, dstIp));
                     String ethResult = SSHConfig.executeCMD(ethCmd, "UTF-8");
 
@@ -580,7 +580,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                     }
 
                     // 读取以太坊日志文件
-                    String ethFromCmLogCmd = "cat /root/CIPS-Gemini-Ethereum/logs/eth.log";
+                    String ethFromCmLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-Ethereum/logs/eth.log";
                     String ethFromCmLogs = SSHConfig.executeCMD(ethFromCmLogCmd, "UTF-8");
 
                     // 连接目标链服务器
@@ -588,7 +588,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
 
                     if (dstChainType.equalsIgnoreCase("h2chain")) {
                         // 读取海河链日志文件
-                        String h2cFromEthLogCmd = "cat /root/CIPS-Gemini-H2Chain/logs/h2chain.log";
+                        String h2cFromEthLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-H2Chain/logs/h2chain.log";
                         String h2cFromEthLogs = SSHConfig.executeCMD(h2cFromEthLogCmd, "UTF-8");
 
                         // 提取源链响应哈希
@@ -616,7 +616,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
 
                     } else if (dstChainType.equalsIgnoreCase("chainmaker")) {
                         // 读取长安链日志文件
-                        String cmFromEthLogCmd = "cat /root/CIPS-Gemini-ChainMaker/logs/chainmaker.log";
+                        String cmFromEthLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-ChainMaker/logs/chainmaker.log";
                         String cmFromEthLogs = SSHConfig.executeCMD(cmFromEthLogCmd, "UTF-8");
 
                         // 提取源链响应哈希
@@ -643,7 +643,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                         resultObj.put("crossChainResult", "以太坊跨长安链操作执行成功");
                     } else if (dstChainType.equalsIgnoreCase("bubi")) {
                         // 读取布比链日志文件
-                        String bubiLogCmd = "cat /root/CIPS-Gemini-Bubi/logs/bubi.log";
+                        String bubiLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-Bubi/logs/bubi.log";
                         String bubiLogs = SSHConfig.executeCMD(bubiLogCmd, "UTF-8");
 
                         // 提取源链响应哈希
@@ -688,14 +688,14 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
 
                 case "h2chain":
                     // 执行海河链跨链命令
-                    String h2cCmd = "source /etc/profile && source ~/.bashrc && cd /root/CIPS-Gemini-H2Chain && ./crossH2C test";
+                    String h2cCmd = "source /etc/profile && source ~/.bashrc && cd /root/CIPS-Gemini-v1/CIPS-Gemini-H2Chain && ./crossH2C test";
                     String h2cResult = SSHConfig.executeCMD(h2cCmd, "UTF-8");
 
                     // 等待35秒，确保日志已经生成
                     Thread.sleep(35000);
 
                     // 读取海河链日志文件
-                    String h2cSrcLogCmd = "cat /root/CIPS-Gemini-H2Chain/logs/h2chain.log";
+                    String h2cSrcLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-H2Chain/logs/h2chain.log";
                     String h2cSrcLogs = SSHConfig.executeCMD(h2cSrcLogCmd, "UTF-8");
 
                     // 连接目标链服务器
@@ -707,7 +707,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
 
                     if (dstChainType.equalsIgnoreCase("ethereum")) {
                         // 读取以太坊日志文件
-                        String ethLogCmdH2c = "cat /root/CIPS-Gemini-Ethereum/logs/eth.log";
+                        String ethLogCmdH2c = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-Ethereum/logs/eth.log";
                         String ethLogsH2c = SSHConfig.executeCMD(ethLogCmdH2c, "UTF-8");
 
                         // 提取源链请求哈希
@@ -735,7 +735,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                         
                     } else if (dstChainType.equalsIgnoreCase("chainmaker")) {
                         // 读取长安链日志文件
-                        String cmFromEthLogCmd = "cat /root/CIPS-Gemini-ChainMaker/logs/chainmaker.log";
+                        String cmFromEthLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-ChainMaker/logs/chainmaker.log";
                         String cmFromEthLogs = SSHConfig.executeCMD(cmFromEthLogCmd, "UTF-8");
 
                         // 提取源链请求哈希
@@ -762,7 +762,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                         resultObj.put("crossChainResult", "海河链跨长安链操作执行成功");
                     }else if (dstChainType.equalsIgnoreCase("bubi")) {
                         // 读取布比链日志文件
-                        String bubiLogCmd = "cat /root/CIPS-Gemini-Bubi/logs/bubi.log";
+                        String bubiLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-Bubi/logs/bubi.log";
                         String bubiLogs = SSHConfig.executeCMD(bubiLogCmd, "UTF-8");
 
                         // 提取源链请求哈希（从bubiResult中提取）
@@ -795,7 +795,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
 
                 case "chainmaker":
                     // 执行长安链跨链命令
-                    String cmCmd = "source /etc/profile && source ~/.bashrc && cd /root/CIPS-Gemini-ChainMaker && go run main.go send 1";
+                    String cmCmd = "source /etc/profile && source ~/.bashrc && cd /root/CIPS-Gemini-v1/CIPS-Gemini-ChainMaker && go run main.go send 1";
                     String cmResult = SSHConfig.executeCMD(cmCmd, "UTF-8");
 
                     // 等待5秒，确保日志已经生成
@@ -806,7 +806,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                     }
 
                     // 读取长安链日志文件
-                    String cmFromEthLogCmd = "cat /root/CIPS-Gemini-ChainMaker/logs/chainmaker.log";
+                    String cmFromEthLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-ChainMaker/logs/chainmaker.log";
                     String cmFromEthLogs = SSHConfig.executeCMD(cmFromEthLogCmd, "UTF-8");
 
                     // 连接目标链服务器
@@ -818,7 +818,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
 
                     if (dstChainType.equalsIgnoreCase("ethereum")) {
                         // 读取以太坊日志文件
-                        String ethLogCmd = "cat /root/CIPS-Gemini-Ethereum/logs/eth.log";
+                        String ethLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-Ethereum/logs/eth.log";
                         String ethLogs = SSHConfig.executeCMD(ethLogCmd, "UTF-8");
 
                         // 提取源链请求哈希
@@ -841,7 +841,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
 
                     } else if (dstChainType.equalsIgnoreCase("h2chain")) {
                         // 读取海河链日志文件
-                        String h2cLogCmd = "cat /root/CIPS-Gemini-H2Chain/logs/h2chain.log";
+                        String h2cLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-H2Chain/logs/h2chain.log";
                         String h2cLogs = SSHConfig.executeCMD(h2cLogCmd, "UTF-8");
 
                         // 提取源链请求哈希
@@ -863,15 +863,15 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                         dstHash = dstMatcher.find() ? dstMatcher.group(1) : "";
                     }else if (dstChainType.equalsIgnoreCase("bubi")) {
                         // 读取布比链日志文件
-                        String bubiLogCmd = "cat /root/CIPS-Gemini-Bubi/logs/bubi.log";
+                        String bubiLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-Bubi/logs/bubi.log";
                         String bubiLogs = SSHConfig.executeCMD(bubiLogCmd, "UTF-8");
 
                         // 读取长安链日志文件
-                        String cmLogCmd = "cat /root/CIPS-Gemini-ChainMaker/logs/chainmaker.log";
+                        String cmLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-ChainMaker/logs/chainmaker.log";
                         String cmLogs = SSHConfig.executeCMD(cmLogCmd, "UTF-8");
 
                         // 执行布比链命令并获取结果
-                        String bubiCmd = "source /etc/profile && source ~/.bashrc && cd /root/CIPS-Gemini-Bubi && docker exec crossbubi_container go run main.go send";
+                        String bubiCmd = "source /etc/profile && source ~/.bashrc && cd /root/CIPS-Gemini-v1/CIPS-Gemini-Bubi && docker exec crossbubi_container go run main.go send";
                         String bubiResult = SSHConfig.executeCMD(bubiCmd, "UTF-8");
 
                         // 提取源链请求哈希（从bubiResult中提取）
@@ -932,7 +932,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                     break;
                 case "bubi":
                     // 执行布比链跨链命令
-                    String bubiCmd = "source /etc/profile && source ~/.bashrc && cd /root/CIPS-Gemini-Bubi && docker exec crossbubi_container go run main.go send";
+                    String bubiCmd = "source /etc/profile && source ~/.bashrc && cd /root/CIPS-Gemini-v1/CIPS-Gemini-Bubi && docker exec crossbubi_container go run main.go send";
                     String bubiResult = SSHConfig.executeCMD(bubiCmd, "UTF-8");
 
                     // 打印命令输出用于调试
@@ -943,7 +943,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                         Thread.sleep(70000);
                     
                     // 读取布比链日志文件
-                    String bubiLogCmd = "cat /root/CIPS-Gemini-Bubi/logs/bubi.log";
+                    String bubiLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-Bubi/logs/bubi.log";
                     String bubiLogs = SSHConfig.executeCMD(bubiLogCmd, "UTF-8");
 
                     // 连接目标链服务器
@@ -951,7 +951,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
 
                     if (dstChainType.equalsIgnoreCase("chainmaker")) {
                         // 读取长安链日志文件
-                        String cmLogCmd = "cat /root/CIPS-Gemini-ChainMaker/logs/chainmaker.log";
+                        String cmLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-ChainMaker/logs/chainmaker.log";
                         String cmLogs = SSHConfig.executeCMD(cmLogCmd, "UTF-8");
 
                         // 提取源链请求哈希（从bubiResult中提取）
@@ -1006,7 +1006,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
 
                     } else if (dstChainType.equalsIgnoreCase("ethereum")) {
                         // 读取以太坊日志文件
-                        String ethLogCmd = "cat /root/CIPS-Gemini-Ethereum/logs/eth.log";
+                        String ethLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-Ethereum/logs/eth.log";
                         String ethLogs = SSHConfig.executeCMD(ethLogCmd, "UTF-8");
 
                         // 提取源链请求哈希（从bubiResult中提取）
@@ -1043,7 +1043,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
 
                     } else if (dstChainType.equalsIgnoreCase("h2chain")) {
                         // 读取海河链日志文件
-                        String h2cLogCmd = "cat /root/CIPS-Gemini-H2Chain/logs/h2chain.log";
+                        String h2cLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-H2Chain/logs/h2chain.log";
                         String h2cLogs = SSHConfig.executeCMD(h2cLogCmd, "UTF-8");
 
                         // 提取源链请求哈希（从bubiResult中提取）

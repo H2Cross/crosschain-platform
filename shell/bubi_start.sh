@@ -19,7 +19,7 @@ TARGET_IP=$3
 TARGET_PORT=$4
 
 # 3. 定义变量
-REPO_DIR=/root/CIPS-Gemini-Bubi
+REPO_DIR=/root/CIPS-Gemini-v1/CIPS-Gemini-Bubi
 TARGET_FILE="$REPO_DIR/relayer/tests/test_transport.go"
 NEW_URL="http://$TARGET_IP:$TARGET_PORT"
 LOG_DIR="$REPO_DIR/logs"
