@@ -37,6 +37,7 @@ public class SysServiceImpl extends ServiceImpl<SysMapper, Sys> implements SysSe
 
     @Autowired
     private SysMapper sysMapper;
+    
     @Autowired
     private ChainMapper chainMapper;
 
