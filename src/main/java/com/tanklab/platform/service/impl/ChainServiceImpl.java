@@ -126,38 +126,71 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
     public CommonResp querychainInfo() {
         CommonResp querychainresp = new CommonResp();
 
-        // QueryWrapper<Chain> wrapper = new QueryWrapper<>();
-        // wrapper.select("chain_id", "ip_address", "port", "chain_type");
-        // List<Chain> chains = chainMapper.selectList(wrapper);
-
-        String ip = "192.168.0.";
-
-        Integer chainsize = 5;
+         QueryWrapper<Chain> wrapper = new QueryWrapper<>();
+         wrapper.select("chain_id", "ip_address", "port", "chain_type");
+         List<Chain> chains = chainMapper.selectList(wrapper);
 
         JSONObject totalInfo = new JSONObject();
         JSONArray chainsInfo = new JSONArray();
 
-        int x = 0;
-        for (CrosschainInfo chain : CrosschainInfo.values()) {
+        for (CrosschainInfo chain : CrosschainInfo.values()){
             JSONObject singleChain = new JSONObject();
             // JsonObject singleChain = new JsonObject();
             singleChain.put("Id", chain.ChainName);
             singleChain.put("Name", chain.ChineseName);
             JSONArray children = new JSONArray();
-            for (int i = 0; i < chainsize; i++) {
-                JSONObject single = new JSONObject();
-                single.put("Id", chain.ChainId + i);
-                single.put("Name", ip + String.valueOf(i + 1) + ":" + String.valueOf(chain.ChainPort));
-                JSONObject parent = new JSONObject();
-                parent.put("Id", chain.ChainName);
-                parent.put("Name", chain.ChineseName);
-                single.put("parent", parent);
-                children.add(single);
+            for (Chain c : chains){
+                if (c.getChainType().equals(chain.ChineseName)){
+                    JSONObject single = new JSONObject();
+                    single.put("Id", c.getChainId());
+                    single.put("Name", c.getIpAddress() + ":" + String.valueOf(c.getPort()));
+
+                    JSONObject parent = new JSONObject();
+                    parent.put("Id", chain.ChainName);
+                    parent.put("Name", chain.ChineseName);
+                    single.put("parent", parent);
+                    children.add(single);
+                }
+
             }
-            x++;
             singleChain.put("children", children);
             chainsInfo.add(singleChain);
         }
+
+
+//        String ip = "192.168.0.";
+
+//        int chainsize = 5;
+//
+////        JSONObject totalInfo = new JSONObject();
+////        JSONArray chainsInfo = new JSONArray();
+//
+//        int x = 0;
+//        for (CrosschainInfo chain : CrosschainInfo.values()) {
+//            JSONObject singleChain = new JSONObject();
+//            // JsonObject singleChain = new JsonObject();
+//            singleChain.put("Id", chain.ChainName);
+//            singleChain.put("Name", chain.ChineseName);
+//            JSONArray children = new JSONArray();
+//            for (int i = 0; i <= chainsize; i++) {
+//                JSONObject single = new JSONObject();
+//                single.put("Id", chain.ChainId + i);
+//                if (i==chainsize){
+//                    single.put("Name", "1.92.88.254" + ":" + String.valueOf(chain.ChainPort));
+//                } else {
+//                    single.put("Name", ip + String.valueOf(i + 1) + ":" + String.valueOf(chain.ChainPort));
+//                }
+//
+//                JSONObject parent = new JSONObject();
+//                parent.put("Id", chain.ChainName);
+//                parent.put("Name", chain.ChineseName);
+//                single.put("parent", parent);
+//                children.add(single);
+//            }
+//            x++;
+//            singleChain.put("children", children);
+//            chainsInfo.add(singleChain);
+//        }
         totalInfo.put("totalInfo", chainsInfo);
         querychainresp.setRet(ResultCode.SUCCESS);
         querychainresp.setData(totalInfo);
