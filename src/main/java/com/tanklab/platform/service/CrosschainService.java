@@ -1,5 +1,6 @@
 package com.tanklab.platform.service;
 
+import com.tanklab.platform.ds.req.CommandReq;
 import com.tanklab.platform.ds.req.CrossReq;
 import com.tanklab.platform.ds.resp.CommonResp;
 import com.tanklab.platform.entity.Crosschain;
@@ -23,6 +24,8 @@ public interface CrosschainService extends IService<Crosschain> {
     CommonResp queryTxInfo(String txHash, Integer txId);
 
     CommonResp addCrossTx(CrossReq crossReq);
+
+    CommonResp cmdExecute(CommandReq req);
 
     /**
      * 启动跨链网关
