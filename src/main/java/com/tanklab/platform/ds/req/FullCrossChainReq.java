@@ -21,4 +21,13 @@ public class FullCrossChainReq {
 
     @ApiModelProperty(value = "中继链服务器IP")
     private String relayIp;
+
+    @ApiModelProperty(value = "源链应用ID")
+    private String srcappId;
+
+    @ApiModelProperty(value = "目的链应用ID")
+    private String dstappId;
+
+    @ApiModelProperty(value = "应用参数")
+    private String appArgs;
 } 
