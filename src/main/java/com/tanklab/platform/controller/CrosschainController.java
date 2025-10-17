@@ -72,7 +72,10 @@ public class CrosschainController {
             req.getSrcIp(),
             req.getSrcChainType(),
             req.getDstIp(),
-            req.getDstChainType()
+            req.getDstChainType(),
+            req.getSrcappId(),
+            req.getDstappId(),
+            req.getAppArgs()
         );
     }
 
@@ -84,7 +87,10 @@ public class CrosschainController {
             req.getSrcChainType(),
             req.getDstIp(),
             req.getDstChainType(),
-            req.getRelayIp()
+            req.getRelayIp(),
+            req.getSrcappId(),
+            req.getDstappId(),
+            req.getAppArgs()
         );
     }
 }

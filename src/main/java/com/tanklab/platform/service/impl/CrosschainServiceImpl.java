@@ -603,9 +603,18 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
      * @return 跨链操作结果
      */
     @Override
-    public CommonResp executeCrossChain(String srcIp, String srcChainType, String dstIp, String dstChainType) {
+    public CommonResp executeCrossChain(String srcIp, String srcChainType, String dstIp, String dstChainType,String srcappId,String dstappId,String appArgs) {
         CommonResp response = new CommonResp();
         JSONObject resultObj = new JSONObject();
+        if(srcappId==null || srcappId.isEmpty()){
+            srcappId="";
+        }
+        if(dstappId==null || dstappId.isEmpty()){
+            dstappId="";
+        }
+        if(appArgs==null || appArgs.isEmpty()){
+            appArgs="";
+        }
 
         try {
             SSHConfig.connect(srcIp);
@@ -777,7 +786,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
 
                 case "h2chain":
                     // 执行海河链跨链命令
-                    String h2cCmd = "source /etc/profile && source ~/.bashrc && cd /root/CIPS-Gemini-v1/CIPS-Gemini-H2Chain && ./crossH2C test";
+                    String h2cCmd = "source /etc/profile && source ~/.bashrc && cd /root/CIPS-Gemini-v1/CIPS-Gemini-H2Chain && "+"./crossH2C test "+srcappId+" "+dstappId+" "+appArgs;
                     String h2cResult = SSHConfig.executeCMD(h2cCmd, "UTF-8");
 
                     // 等待35秒，确保日志已经生成
@@ -1197,9 +1206,18 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
      * 执行完整的跨链操作（包括启动网关和执行跨链）
      */
     @Override
-    public CommonResp executeFullCrossChain(String srcIp, String srcChainType, String dstIp, String dstChainType,
-            String relayIp) {
+    public CommonResp executeFullCrossChain(String srcIp, String srcChainType, String dstIp, String dstChainType,String relayIp,String srcappId,String dstappId,String appArgs) {
         CommonResp response = new CommonResp();
+
+        if(srcappId==null || srcappId.isEmpty()){
+            srcappId="";
+        }
+        if(dstappId==null || dstappId.isEmpty()){
+            dstappId="";
+        }
+        if(appArgs==null || appArgs.isEmpty()){
+            appArgs="";
+        }
 
         try {
             // 第一步：启动网关
@@ -1212,7 +1230,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
             Thread.sleep(10000);
 
             // 第二步：执行跨链操作
-            CommonResp crossChainResponse = executeCrossChain(srcIp, srcChainType, dstIp, dstChainType);
+            CommonResp crossChainResponse = executeCrossChain(srcIp, srcChainType, dstIp, dstChainType,srcappId,dstappId,appArgs);
             if (!ResultCode.SUCCESS.Code.equals(crossChainResponse.getCode())) {
                 return crossChainResponse; // 如果跨链操作失败，直接返回错误
             }

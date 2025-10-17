@@ -46,7 +46,7 @@ public interface CrosschainService extends IService<Crosschain> {
      * @param dstChainType 目标链类型 (ethereum/chainmaker/h2chain)
      * @return 跨链操作结果
      */
-    CommonResp executeCrossChain(String srcIp, String srcChainType, String dstIp, String dstChainType);
+    CommonResp executeCrossChain(String srcIp, String srcChainType, String dstIp, String dstChainType,String srcappId,String dstappId,String appArgs);
 
     /**
      * 执行完整的跨链操作（包括启动网关和执行跨链）
@@ -57,5 +57,5 @@ public interface CrosschainService extends IService<Crosschain> {
      * @param relayIp 中继链服务器IP
      * @return 跨链操作结果
      */
-    CommonResp executeFullCrossChain(String srcIp, String srcChainType, String dstIp, String dstChainType, String relayIp);
+    CommonResp executeFullCrossChain(String srcIp, String srcChainType, String dstIp, String dstChainType, String relayIp,String srcappId,String dstappId,String appArgs);
 }
