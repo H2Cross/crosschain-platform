@@ -17,6 +17,7 @@ import com.tanklab.platform.ds.req.CrossReq;
 import com.tanklab.platform.ds.resp.CommonResp;
 
 import com.tanklab.platform.entity.Crosschain;
+import com.tanklab.platform.entity.Sys;
 import com.tanklab.platform.mapper.CrosschainMapper;
 import com.tanklab.platform.service.CrosschainService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -26,6 +27,9 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.UUID;
+import java.util.Date;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * <p>
@@ -1172,6 +1176,14 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
             response.setRet(ResultCode.SUCCESS);
             response.setData(resultObj);
 
+            // 保存跨链交易记录到数据库
+            try {
+                saveCrossChainRecord(srcIp, srcChainType, dstIp, dstChainType, resultObj);
+            } catch (Exception e) {
+                log.error("保存跨链记录到数据库失败: " + e.getMessage());
+                // 数据库保存失败不影响跨链操作结果
+            }
+
         } catch (Exception e) {
             response.setRet(ResultCode.FAILURE);
             response.setMessage("跨链操作失败: " + e.getMessage());
@@ -1216,6 +1228,89 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
         }
 
         return response;
+    }
+
+    /**
+     * 保存跨链交易记录到数据库
+     * 
+     * @param srcIp        源链IP
+     * @param srcChainType 源链类型
+     * @param dstIp        目标链IP
+     * @param dstChainType 目标链类型
+     * @param resultData   跨链操作结果数据
+     */
+    private void saveCrossChainRecord(String srcIp, String srcChainType, String dstIp,
+            String dstChainType, Object resultData) {
+        try {
+            Crosschain crosschain = new Crosschain();
+
+            // 设置基本信息
+            crosschain.setSrcIp(srcIp);
+            crosschain.setSrcChainType(srcChainType);
+            crosschain.setDstIp(dstIp);
+            crosschain.setDstChainType(dstChainType);
+
+            // 设置端口信息
+            crosschain.setSrcPort(srcPort(srcChainType));
+            crosschain.setDstPort(dstPort(dstChainType));
+
+            // 生成唯一的交易哈希
+            String txHash = generateTxHash(srcIp, dstIp, srcChainType, dstChainType);
+            crosschain.setTxHash(txHash);
+
+            // 设置时间戳
+            crosschain.setTxTime(new Date());
+
+            // 从结果数据中提取哈希信息
+            if (resultData instanceof JSONObject) {
+                JSONObject resultObj = (JSONObject) resultData;
+
+                // 提取源链请求哈希
+                String srcReqHash = resultObj.getString("srcReqHash");
+                if (srcReqHash != null && !srcReqHash.isEmpty()) {
+                    crosschain.setSrcHash(srcReqHash);
+                }
+
+                // 提取目标链哈希
+                String dstHash = resultObj.getString("dstHash");
+                if (dstHash != null && !dstHash.isEmpty()) {
+                    crosschain.setDstHash(dstHash);
+                }
+
+                // 提取响应哈希
+                String srcRespHash = resultObj.getString("srcRespHash");
+                if (srcRespHash != null && !srcRespHash.isEmpty()) {
+                    crosschain.setResponseHash(srcRespHash);
+                }
+            }
+
+            // 插入数据库
+            crosschainMapper.insert(crosschain);
+            System.out.println("跨链交易记录已保存到数据库，交易哈希: " + txHash);
+        } catch (Exception e) {
+            System.out.println("保存跨链记录到数据库时发生错误: " + e.getMessage());
+            throw e; // 重新抛出异常，让调用方处理
+        }
+    }
+
+    /**
+     * 生成唯一的交易哈希
+     * 
+     * @param srcIp        源链IP
+     * @param dstIp        目标链IP
+     * @param srcChainType 源链类型
+     * @param dstChainType 目标链类型
+     * @return 唯一的交易哈希
+     */
+    private String generateTxHash(String srcIp, String dstIp, String srcChainType, String dstChainType) {
+        // 使用UUID和时间戳生成唯一哈希
+        String uniqueId = UUID.randomUUID().toString().replace("-", "");
+        long timestamp = System.currentTimeMillis();
+        String hashInput = srcIp + dstIp + srcChainType + dstChainType + timestamp + uniqueId;
+
+        // 哈希生成
+        return String.valueOf(hashInput.hashCode()).replace("-", "") +
+                String.valueOf(timestamp).substring(8); // 取时间戳的后几位
     }
 
 }
