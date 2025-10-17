@@ -4,6 +4,7 @@ import com.tanklab.platform.ds.req.CrossReq;
 import com.tanklab.platform.ds.req.StartGatewaysReq;
 import com.tanklab.platform.ds.req.CrossChainReq;
 import com.tanklab.platform.ds.req.FullCrossChainReq;
+import com.tanklab.platform.ds.req.CommandReq;
 import com.tanklab.platform.ds.resp.CommonResp;
 import com.tanklab.platform.service.CrosschainService;
 import io.swagger.annotations.ApiOperation;
@@ -44,6 +45,12 @@ public class CrosschainController {
     @PostMapping("/addCrossTx")
     public CommonResp addCrossTx (@RequestBody CrossReq addbeefreq) {
         return crosschainService.addCrossTx(addbeefreq);
+    }
+
+    @ApiOperation(value="开发者模式命令执行")
+    @PostMapping("/cmdExecute")
+    public CommonResp cmdExecute (@RequestBody CommandReq req) {
+        return crosschainService.cmdExecute(req);
     }
 
     @ApiOperation(value="启动跨链网关")

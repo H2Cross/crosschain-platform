@@ -12,10 +12,12 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.tanklab.platform.common.ResultCode;
 import com.tanklab.platform.common.SSHConfig;
+import com.tanklab.platform.ds.req.CommandReq;
 import com.tanklab.platform.ds.req.CrossReq;
 import com.tanklab.platform.ds.resp.CommonResp;
 
 import com.tanklab.platform.entity.Crosschain;
+import com.tanklab.platform.entity.Sys;
 import com.tanklab.platform.mapper.CrosschainMapper;
 import com.tanklab.platform.service.CrosschainService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -25,6 +27,9 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.UUID;
+import java.util.Date;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * <p>
@@ -69,7 +74,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                 resultObj.put("dstHash", crosschain.getDstHash());
                 resultObj.put("txTime", crosschain.getTxTime());
                 resultObj.put("txHash", crosschain.getTxHash());
-                resultObj.put("responseHash",crosschain.getResponseHash());
+                resultObj.put("responseHash", crosschain.getResponseHash());
                 resultArray.add(resultObj);
             }
 
@@ -125,7 +130,6 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
             resultObj.put("srcHash", crosschain.getSrcHash());
             resultObj.put("dstHash", crosschain.getDstHash());
 
-
             // 设置响应数据
             response.setRet(ResultCode.SUCCESS);
             response.setData(resultObj);
@@ -137,6 +141,82 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
         }
 
         return response;
+    }
+
+    @Override
+    public CommonResp cmdExecute(CommandReq req) {
+        CommonResp response = new CommonResp();
+        String cmd = req.getCommand(); // 假设 CrossReq 有 command 字段
+        System.out.println("[CMD] 执行命令: " + cmd);
+
+        try {
+            // 启动进程
+            Process process = Runtime.getRuntime().exec(cmd);
+
+            // 获取标准输出流和错误流
+            BufferedReader stdOut = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            BufferedReader stdErr = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+
+            StringBuilder outputBuilder = new StringBuilder();
+            String line;
+
+            // 创建独立线程持续读取标准输出
+            Thread outThread = new Thread(() -> {
+                try {
+                    String outLine;
+                    while ((outLine = readLineSafe(stdOut)) != null) {
+                        System.out.println("[OUT] " + outLine);
+                        synchronized (outputBuilder) {
+                            outputBuilder.append(outLine).append("\n");
+                        }
+                    }
+                } catch (Exception ignored) {
+                }
+            });
+
+            // 创建独立线程持续读取错误输出
+            Thread errThread = new Thread(() -> {
+                try {
+                    String errLine;
+                    while ((errLine = readLineSafe(stdErr)) != null) {
+                        System.err.println("[ERR] " + errLine);
+                        synchronized (outputBuilder) {
+                            outputBuilder.append(errLine).append("\n");
+                        }
+                    }
+                } catch (Exception ignored) {
+                }
+            });
+
+            outThread.start();
+            errThread.start();
+
+            // 等待命令执行完
+            int exitCode = process.waitFor();
+            outThread.join();
+            errThread.join();
+
+            response.setRet(ResultCode.SUCCESS);
+            response.setMsg("命令执行完成，exitCode=" + exitCode);
+            response.setData(outputBuilder.toString());
+        } catch (Exception e) {
+            response.setRet(ResultCode.ERROR);
+            response.setMsg("执行失败: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return response;
+    }
+
+    /**
+     * 安全地读取一行，避免阻塞或异常中断
+     */
+    private String readLineSafe(BufferedReader reader) {
+        try {
+            return reader.readLine();
+        } catch (IOException e) {
+            return null;
+        }
     }
 
     @Override
@@ -314,29 +394,29 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
             String relayIp) {
         CommonResp response = new CommonResp();
         JSONObject resultObj = new JSONObject();
-        
+
         try {
             // 1. 启动中继链网关
             startRelayChain(relayIp, resultObj);
-            
+
             // 2. 启动源链网关
             startSourceChain(srcIp, srcChainType, dstIp, dstPort(dstChainType), dstChainType, resultObj);
-            
+
             // 3. 启动目标链网关
             startDestinationChain(dstIp, dstChainType, srcIp, srcPort(srcChainType), srcChainType, resultObj);
-            
+
             response.setRet(ResultCode.SUCCESS);
             response.setData(resultObj);
-            
+
         } catch (Exception e) {
             response.setRet(ResultCode.FAILURE);
             response.setMessage("启动网关失败: " + e.getMessage());
             e.printStackTrace();
         }
-        
+
         return response;
     }
-    
+
     /**
      * 启动中继链网关
      */
@@ -352,14 +432,14 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
         resultObj.put("relayStartResult", "中继链网关启动成功");
         resultObj.put("relayStartLog", result);
     }
-    
+
     /**
      * 启动源链网关
      */
-    private void startSourceChain(String srcIp, String srcChainType, String dstIp, int dstPort, 
-                                String dstChainType, JSONObject resultObj) throws Exception {
+    private void startSourceChain(String srcIp, String srcChainType, String dstIp, int dstPort,
+            String dstChainType, JSONObject resultObj) throws Exception {
         SSHConfig.connect(srcIp); // 使用默认的用户名和密码
-        
+
         switch (srcChainType.toLowerCase()) {
             case "ethereum":
                 String ethCmd = "source /etc/profile && source ~/.bashrc && cd /root/shell && nohup /root/shell/eth_start.sh > eth.log 2>&1 &";
@@ -367,7 +447,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                 resultObj.put("ethereumStartResult_" + srcIp, "以太坊网关启动成功");
                 resultObj.put("ethereumStartLog_" + srcIp, ethResult);
                 break;
-                
+
             case "chainmaker":
                 // String chainId = String.valueOf(getChainId("chainmaker", srcIp));
                 // todo: for local test
@@ -376,40 +456,44 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                         getChainId(dstChainType, dstIp), dstIp, srcPort(dstChainType));
                 String cmResult = SSHConfig.executeCMD(cmCmd, "UTF-8");
                 resultObj.put("chainmakerStartResult_" + srcIp, "长安链网关启动成功");
-                resultObj.put("chainmakerStartLog_" + srcIp, cmResult); 
+                resultObj.put("chainmakerStartLog_" + srcIp, cmResult);
                 break;
-                
+
             case "h2chain":
-                //for test
-                String h2cCmd = String.format("source /etc/profile && source ~/.bashrc && cd /root/shell && nohup /root/shell/h2chain_start.sh %d > h2chain.log 2>&1 &", getChainId(dstChainType, dstIp));
-                // String h2cCmd = String.format("source /etc/profile && source ~/.bashrc && cd /root/shell && nohup /root/shell/h2chain_start.sh %d > h2chain.log 2>&1 &", getChainId(dstChainType, dstIp));
+                // for test
+                String h2cCmd = String.format(
+                        "source /etc/profile && source ~/.bashrc && cd /root/shell && nohup /root/shell/h2chain_start.sh %d > h2chain.log 2>&1 &",
+                        getChainId(dstChainType, dstIp));
+                // String h2cCmd = String.format("source /etc/profile && source ~/.bashrc && cd
+                // /root/shell && nohup /root/shell/h2chain_start.sh %d > h2chain.log 2>&1 &",
+                // getChainId(dstChainType, dstIp));
                 String h2cResult = SSHConfig.executeCMD(h2cCmd, "UTF-8");
                 resultObj.put("h2chainStartResult_" + srcIp, "海河链网关启动成功");
                 resultObj.put("h2chainStartLog_" + srcIp, h2cResult);
                 break;
-                
+
             case "bubi":
                 String bubiCmd = String.format(
                         "source /etc/profile && source ~/.bashrc && cd /root/shell && nohup /root/shell/bubi_start.sh %s %s %s %d > bubi.log 2>&1 &",
                         getChainId(srcChainType, srcIp), getChainId(dstChainType, dstIp), dstIp, srcPort(dstChainType));
-            
+
                 String bubiResult = SSHConfig.executeCMD(bubiCmd, "UTF-8");
                 resultObj.put("bubiStartResult_" + srcIp, "布比链网关启动成功");
                 resultObj.put("bubiStartLog_" + srcIp, bubiResult);
                 break;
-                
+
             default:
                 throw new IllegalArgumentException("不支持的源链类型: " + srcChainType);
         }
     }
-    
+
     /**
      * 启动目标链网关
      */
     private void startDestinationChain(String dstIp, String dstChainType, String srcIp, int srcPort,
-                                     String srcChainType, JSONObject resultObj) throws Exception {
+            String srcChainType, JSONObject resultObj) throws Exception {
         SSHConfig.connect(dstIp); // 使用默认的用户名和密码
-        
+
         switch (dstChainType.toLowerCase()) {
             case "ethereum":
                 String ethCmd = "source /etc/profile && source ~/.bashrc && cd /root/shell && nohup /root/shell/eth_start.sh > eth.log 2>&1 &";
@@ -417,7 +501,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                 resultObj.put("ethereumStartResult_" + dstIp, "以太坊网关启动成功");
                 resultObj.put("ethereumStartLog_" + dstIp, ethResult);
                 break;
-                
+
             case "chainmaker":
                 String chainId = String.valueOf(getChainId("chainmaker", dstIp));
                 // todo: for local test
@@ -428,34 +512,39 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                 resultObj.put("chainmakerStartResult_" + dstIp, "长安链网关启动成功");
                 resultObj.put("chainmakerStartLog_" + dstIp, cmResult);
                 break;
-                
+
             case "h2chain":
-                // String h2cCmd = String.format("source /etc/profile && source ~/.bashrc && cd /root/shell && nohup /root/shell/h2chain_start.sh %d > h2chain.log 2>&1 &", getChainId(srcChainType, srcIp));
-                //for test
-                String h2cCmd = String.format("source /etc/profile && source ~/.bashrc && cd /root/shell && nohup /root/shell/h2chain_start.sh %d > h2chain.log 2>&1 &", getChainId(dstChainType, dstIp));
+                // String h2cCmd = String.format("source /etc/profile && source ~/.bashrc && cd
+                // /root/shell && nohup /root/shell/h2chain_start.sh %d > h2chain.log 2>&1 &",
+                // getChainId(srcChainType, srcIp));
+                // for test
+                String h2cCmd = String.format(
+                        "source /etc/profile && source ~/.bashrc && cd /root/shell && nohup /root/shell/h2chain_start.sh %d > h2chain.log 2>&1 &",
+                        getChainId(dstChainType, dstIp));
                 String h2cResult = SSHConfig.executeCMD(h2cCmd, "UTF-8");
                 resultObj.put("h2chainStartResult_" + dstIp, "海河链网关启动成功");
                 resultObj.put("h2chainStartLog_" + dstIp, h2cResult);
                 break;
-                
+
             case "bubi":
-            //test
+                // test
                 String bubiCmd = String.format(
                         "source /etc/profile && source ~/.bashrc && cd /root/shell && nohup /root/shell/bubi_start.sh %s %s %s %d > bubi.log 2>&1 &",
                         getChainId(srcChainType, srcIp), getChainId(dstChainType, dstIp), dstIp, srcPort(dstChainType));
                 // String bubiCmd = String.format(
-                //         "source /etc/profile && source ~/.bashrc && cd /root/shell && nohup /root/shell/bubi_start.sh %s %s %s %d > bubi.log 2>&1 &",
-                //        14002, 11002, "192.168.0.2", 8088);
+                // "source /etc/profile && source ~/.bashrc && cd /root/shell && nohup
+                // /root/shell/bubi_start.sh %s %s %s %d > bubi.log 2>&1 &",
+                // 14002, 11002, "192.168.0.2", 8088);
                 String bubiResult = SSHConfig.executeCMD(bubiCmd, "UTF-8");
                 resultObj.put("bubiStartResult_" + dstIp, "布比链网关启动成功");
                 resultObj.put("bubiStartLog_" + dstIp, bubiResult);
                 break;
-                
+
             default:
                 throw new IllegalArgumentException("不支持的目标链类型: " + dstChainType);
         }
     }
-    
+
     /**
      * 获取链的默认端口
      */
@@ -473,14 +562,14 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                 throw new IllegalArgumentException("不支持的链类型: " + chainType);
         }
     }
-    
+
     /**
      * 获取链的默认端口
      */
     private int dstPort(String chainType) {
         return srcPort(chainType);
     }
-    
+
     /**
      * 计算链ID
      */
@@ -488,7 +577,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
         // 从IP地址中提取最后一个数字
         String[] parts = ip.split("\\.");
         int lastNumber = Integer.parseInt(parts[3]);
-        
+
         // 根据链类型计算chainId
         switch (chainType.toLowerCase()) {
             case "ethereum":
@@ -547,7 +636,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                         dstChainId = 11000 + Integer.parseInt(dstIpParts[3]);
                     } else if (dstChainType.equalsIgnoreCase("h2chain")) {
                         dstChainId = 13000 + Integer.parseInt(dstIpParts[3]);
-                    }else if (dstChainType.equalsIgnoreCase("bubi")) {
+                    } else if (dstChainType.equalsIgnoreCase("bubi")) {
                         dstChainId = 14000 + Integer.parseInt(dstIpParts[3]);
                     }
 
@@ -582,9 +671,9 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                     }
 
                     // 等待50秒，确保日志已经生成
-                    if(dstChainType.equalsIgnoreCase("bubi")){
+                    if (dstChainType.equalsIgnoreCase("bubi")) {
                         Thread.sleep(70000);
-                    }else{
+                    } else {
                         Thread.sleep(50000);
                     }
 
@@ -663,18 +752,18 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                         while (ethRespMatcher.find()) {
                             ethRespHash = ethRespMatcher.group(1);
                         }
-                        
+
                         // 添加调试信息
                         System.out.println("正在尝试匹配响应哈希...");
                         System.out.println("使用的正则表达式: " + ethRespPattern);
                         System.out.println("日志内容：");
                         System.out.println(bubiLogs);
-                        
+
                         while (ethRespMatcher.find()) {
                             ethRespHash = ethRespMatcher.group(1);
                             System.out.println("成功提取到响应哈希: " + ethRespHash);
                         }
-                        
+
                         if (ethRespHash.isEmpty()) {
                             System.out.println("未能匹配到响应哈希");
                         }
@@ -741,7 +830,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                         resultObj.put("srcRespHash", srcRespHash);
                         resultObj.put("srcReqHash", srcReqHash);
                         resultObj.put("crossChainResult", "海河链跨以太坊操作执行成功");
-                        
+
                     } else if (dstChainType.equalsIgnoreCase("chainmaker")) {
                         // 读取长安链日志文件
                         String cmFromEthLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-ChainMaker/logs/chainmaker.log";
@@ -769,7 +858,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                         resultObj.put("srcRespHash", srcRespHash);
                         resultObj.put("srcReqHash", srcReqHash);
                         resultObj.put("crossChainResult", "海河链跨长安链操作执行成功");
-                    }else if (dstChainType.equalsIgnoreCase("bubi")) {
+                    } else if (dstChainType.equalsIgnoreCase("bubi")) {
                         // 读取布比链日志文件
                         String bubiLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-Bubi/logs/bubi.log";
                         String bubiLogs = SSHConfig.executeCMD(bubiLogCmd, "UTF-8");
@@ -778,20 +867,20 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                         String h2cReqPattern = "Obtained request cmhash on the source chain\\(chainid: 13002, cmhash: ([a-fA-F0-9]+)\\)";
                         Pattern h2cReqRegex = Pattern.compile(h2cReqPattern);
                         Matcher h2cReqMatcher = h2cReqRegex.matcher(h2cSrcLogs);
-                        srcReqHash = h2cReqMatcher.find() ? h2cReqMatcher.group(1) : "";        
-                        
+                        srcReqHash = h2cReqMatcher.find() ? h2cReqMatcher.group(1) : "";
+
                         // 提取源链响应哈希
                         String h2cRespPattern = "\\[DEBG\\]:\\s+get resp txhash: ([a-fA-F0-9]+)";
                         Pattern h2cRespRegex = Pattern.compile(h2cRespPattern);
                         Matcher h2cRespMatcher = h2cRespRegex.matcher(h2cSrcLogs);
-                        srcRespHash = h2cRespMatcher.find() ? h2cRespMatcher.group(1) : "";                     
-                        
+                        srcRespHash = h2cRespMatcher.find() ? h2cRespMatcher.group(1) : "";
+
                         // 提取目标链哈希
                         String h2cToBubiDstPattern = "contractCallGo succeed,hash=([a-fA-F0-9]+)";
                         Pattern h2cToBubiDstRegex = Pattern.compile(h2cToBubiDstPattern);
                         Matcher h2cToBubiDstMatcher = h2cToBubiDstRegex.matcher(bubiLogs);
                         String h2cToBubiDstHash = "";
-                        while (h2cToBubiDstMatcher.find()) {                                    
+                        while (h2cToBubiDstMatcher.find()) {
                             h2cToBubiDstHash = h2cToBubiDstMatcher.group(1);
                         }
 
@@ -799,7 +888,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                         resultObj.put("srcRespHash", srcRespHash);
                         resultObj.put("srcReqHash", srcReqHash);
                         resultObj.put("crossChainResult", "海河链跨布比链操作执行成功");
-                    }       
+                    }
                     break;
 
                 case "chainmaker":
@@ -808,9 +897,9 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                     String cmResult = SSHConfig.executeCMD(cmCmd, "UTF-8");
 
                     // 等待5秒，确保日志已经生成
-                    if(dstChainType.equalsIgnoreCase("bubi")){
+                    if (dstChainType.equalsIgnoreCase("bubi")) {
                         Thread.sleep(40000);
-                    }else{
+                    } else {
                         Thread.sleep(10000);
                     }
 
@@ -870,7 +959,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                         Pattern dstRegex = Pattern.compile(dstPattern);
                         Matcher dstMatcher = dstRegex.matcher(h2cLogs);
                         dstHash = dstMatcher.find() ? dstMatcher.group(1) : "";
-                    }else if (dstChainType.equalsIgnoreCase("bubi")) {
+                    } else if (dstChainType.equalsIgnoreCase("bubi")) {
                         // 读取布比链日志文件
                         String bubiLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-Bubi/logs/bubi.log";
                         String bubiLogs = SSHConfig.executeCMD(bubiLogCmd, "UTF-8");
@@ -932,7 +1021,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                         resultObj.put("srcRespHash", bubiRespHash);
                         resultObj.put("dstHash", bubiToCmDstHash);
                         resultObj.put("crossChainResult", "布比链跨长安链操作执行成功");
-                    }   
+                    }
 
                     resultObj.put("dstHash", dstHash);
                     resultObj.put("srcRespHash", srcRespHash);
@@ -947,10 +1036,10 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                     // 打印命令输出用于调试
                     System.out.println("命令完整输出：");
                     System.out.println(bubiResult);
-                    
-                        // 等待跨链操作完成
-                        Thread.sleep(70000);
-                    
+
+                    // 等待跨链操作完成
+                    Thread.sleep(70000);
+
                     // 读取布比链日志文件
                     String bubiLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-Bubi/logs/bubi.log";
                     String bubiLogs = SSHConfig.executeCMD(bubiLogCmd, "UTF-8");
@@ -1088,15 +1177,21 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                         resultObj.put("crossChainResult", "布比链跨海河链操作执行成功");
                     }
                     break;
-                    
-               
-                    
+
                 default:
                     throw new IllegalArgumentException("不支持的源链类型: " + srcChainType);
             }
 
             response.setRet(ResultCode.SUCCESS);
             response.setData(resultObj);
+
+            // 保存跨链交易记录到数据库
+            try {
+                saveCrossChainRecord(srcIp, srcChainType, dstIp, dstChainType, resultObj);
+            } catch (Exception e) {
+                log.error("保存跨链记录到数据库失败: " + e.getMessage());
+                // 数据库保存失败不影响跨链操作结果
+            }
 
         } catch (Exception e) {
             response.setRet(ResultCode.FAILURE);
@@ -1153,5 +1248,87 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
         return response;
     }
 
-}
+    /**
+     * 保存跨链交易记录到数据库
+     * 
+     * @param srcIp        源链IP
+     * @param srcChainType 源链类型
+     * @param dstIp        目标链IP
+     * @param dstChainType 目标链类型
+     * @param resultData   跨链操作结果数据
+     */
+    private void saveCrossChainRecord(String srcIp, String srcChainType, String dstIp,
+            String dstChainType, Object resultData) {
+        try {
+            Crosschain crosschain = new Crosschain();
 
+            // 设置基本信息
+            crosschain.setSrcIp(srcIp);
+            crosschain.setSrcChainType(srcChainType);
+            crosschain.setDstIp(dstIp);
+            crosschain.setDstChainType(dstChainType);
+
+            // 设置端口信息
+            crosschain.setSrcPort(srcPort(srcChainType));
+            crosschain.setDstPort(dstPort(dstChainType));
+
+            // 生成唯一的交易哈希
+            String txHash = generateTxHash(srcIp, dstIp, srcChainType, dstChainType);
+            crosschain.setTxHash(txHash);
+
+            // 设置时间戳
+            crosschain.setTxTime(new Date());
+
+            // 从结果数据中提取哈希信息
+            if (resultData instanceof JSONObject) {
+                JSONObject resultObj = (JSONObject) resultData;
+
+                // 提取源链请求哈希
+                String srcReqHash = resultObj.getString("srcReqHash");
+                if (srcReqHash != null && !srcReqHash.isEmpty()) {
+                    crosschain.setSrcHash(srcReqHash);
+                }
+
+                // 提取目标链哈希
+                String dstHash = resultObj.getString("dstHash");
+                if (dstHash != null && !dstHash.isEmpty()) {
+                    crosschain.setDstHash(dstHash);
+                }
+
+                // 提取响应哈希
+                String srcRespHash = resultObj.getString("srcRespHash");
+                if (srcRespHash != null && !srcRespHash.isEmpty()) {
+                    crosschain.setResponseHash(srcRespHash);
+                }
+            }
+
+            // 插入数据库
+            crosschainMapper.insert(crosschain);
+            System.out.println("跨链交易记录已保存到数据库，交易哈希: " + txHash);
+        } catch (Exception e) {
+            System.out.println("保存跨链记录到数据库时发生错误: " + e.getMessage());
+            throw e; // 重新抛出异常，让调用方处理
+        }
+    }
+
+    /**
+     * 生成唯一的交易哈希
+     * 
+     * @param srcIp        源链IP
+     * @param dstIp        目标链IP
+     * @param srcChainType 源链类型
+     * @param dstChainType 目标链类型
+     * @return 唯一的交易哈希
+     */
+    private String generateTxHash(String srcIp, String dstIp, String srcChainType, String dstChainType) {
+        // 使用UUID和时间戳生成唯一哈希
+        String uniqueId = UUID.randomUUID().toString().replace("-", "");
+        long timestamp = System.currentTimeMillis();
+        String hashInput = srcIp + dstIp + srcChainType + dstChainType + timestamp + uniqueId;
+
+        // 哈希生成
+        return String.valueOf(hashInput.hashCode()).replace("-", "") +
+                String.valueOf(timestamp).substring(8); // 取时间戳的后几位
+    }
+
+}
