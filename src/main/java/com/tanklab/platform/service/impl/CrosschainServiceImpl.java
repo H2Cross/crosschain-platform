@@ -934,7 +934,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                         String h2cLogs = SSHConfig.executeCMD(h2cLogCmd, "UTF-8");
 
                         // 提取源链请求哈希
-                        String srcReqPattern = "Obtained request cmhash on the source chain\\(11002\\): ([a-fA-F0-9]+)";
+                        String srcReqPattern = "Obtained request cmhash on the source chain\\([0-9]+\\): ([a-fA-F0-9]+)";
                         Pattern srcReqRegex = Pattern.compile(srcReqPattern);
                         Matcher srcReqMatcher = srcReqRegex.matcher(cmFromEthLogs);
                         srcReqHash = srcReqMatcher.find() ? srcReqMatcher.group(1) : "";
@@ -946,7 +946,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                         srcRespHash = srcRespMatcher.find() ? srcRespMatcher.group(1) : "";
 
                         // 提取目标链哈希
-                        String dstPattern = "Obtained response cmhash on the target chain\\(chainid: 13002, cmhash: ([a-fA-F0-9]+)\\)";
+                        String dstPattern = "Obtained response cmhash on the target chain\\(chainid: [0-9]+, cmhash: ([a-fA-F0-9]+)\\)";
                         Pattern dstRegex = Pattern.compile(dstPattern);
                         Matcher dstMatcher = dstRegex.matcher(h2cLogs);
                         dstHash = dstMatcher.find() ? dstMatcher.group(1) : "";
