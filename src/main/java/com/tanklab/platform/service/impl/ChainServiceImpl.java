@@ -40,6 +40,8 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -50,30 +52,31 @@ import java.security.cert.X509Certificate;
 
 import java.nio.file.Path;
 import java.nio.file.Files;
-import org.hyperledger.fabric.gateway.Identities;
+// import org.hyperledger.fabric.gateway.Identities;
 
 import java.io.File;
 import java.nio.file.Paths;
-import org.hyperledger.fabric.gateway.Gateway;
-import org.hyperledger.fabric.gateway.Network;
-import org.hyperledger.fabric.gateway.Wallet;
-import org.hyperledger.fabric.gateway.Wallets;
+// import org.hyperledger.fabric.gateway.Gateway;
+// import org.hyperledger.fabric.gateway.Network;
+// import org.hyperledger.fabric.gateway.Wallet;
+// import org.hyperledger.fabric.gateway.Wallets;
 
-import org.apache.commons.codec.binary.Hex; 
-import org.hyperledger.fabric.sdk.*;
+import org.apache.commons.codec.binary.Hex;
+// import org.hyperledger.fabric.sdk.*;
 
 /* ==========  gRPC / Fabric-Gateway SDK  ========== */
 import io.grpc.Grpc;
 import io.grpc.TlsChannelCredentials;
-import org.hyperledger.fabric.client.*;
-import org.hyperledger.fabric.client.identity.Identities;
-import org.hyperledger.fabric.client.identity.Identity;
-import org.hyperledger.fabric.client.identity.Signer;
-import org.hyperledger.fabric.client.identity.Signers;
-import org.hyperledger.fabric.client.identity.X509Identity;
+// import org.hyperledger.fabric.client.*;
+// import org.hyperledger.fabric.client.identity.Identities;
+// import org.hyperledger.fabric.client.identity.Identity;
+// import org.hyperledger.fabric.client.identity.Signer;
+// import org.hyperledger.fabric.client.identity.Signers;
+// import org.hyperledger.fabric.client.identity.X509Identity;
 
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
+
 /**
  * <p>
  * 链信息表 服务实现类
@@ -127,21 +130,21 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
     public CommonResp querychainInfo() {
         CommonResp querychainresp = new CommonResp();
 
-         QueryWrapper<Chain> wrapper = new QueryWrapper<>();
-         wrapper.select("chain_id", "ip_address", "port", "chain_type");
-         List<Chain> chains = chainMapper.selectList(wrapper);
+        QueryWrapper<Chain> wrapper = new QueryWrapper<>();
+        wrapper.select("chain_id", "ip_address", "port", "chain_type");
+        List<Chain> chains = chainMapper.selectList(wrapper);
 
         JSONObject totalInfo = new JSONObject();
         JSONArray chainsInfo = new JSONArray();
 
-        for (CrosschainInfo chain : CrosschainInfo.values()){
+        for (CrosschainInfo chain : CrosschainInfo.values()) {
             JSONObject singleChain = new JSONObject();
             // JsonObject singleChain = new JsonObject();
             singleChain.put("Id", chain.ChainName);
             singleChain.put("Name", chain.ChineseName);
             JSONArray children = new JSONArray();
-            for (Chain c : chains){
-                if (c.getChainType().equals(chain.ChineseName)){
+            for (Chain c : chains) {
+                if (c.getChainType().equals(chain.ChineseName)) {
                     JSONObject single = new JSONObject();
                     single.put("Id", c.getChainId());
                     single.put("Name", c.getIpAddress() + ":" + String.valueOf(c.getPort()));
@@ -158,40 +161,40 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
             chainsInfo.add(singleChain);
         }
 
+        // String ip = "192.168.0.";
 
-//        String ip = "192.168.0.";
-
-//        int chainsize = 5;
-//
-////        JSONObject totalInfo = new JSONObject();
-////        JSONArray chainsInfo = new JSONArray();
-//
-//        int x = 0;
-//        for (CrosschainInfo chain : CrosschainInfo.values()) {
-//            JSONObject singleChain = new JSONObject();
-//            // JsonObject singleChain = new JsonObject();
-//            singleChain.put("Id", chain.ChainName);
-//            singleChain.put("Name", chain.ChineseName);
-//            JSONArray children = new JSONArray();
-//            for (int i = 0; i <= chainsize; i++) {
-//                JSONObject single = new JSONObject();
-//                single.put("Id", chain.ChainId + i);
-//                if (i==chainsize){
-//                    single.put("Name", "1.92.88.254" + ":" + String.valueOf(chain.ChainPort));
-//                } else {
-//                    single.put("Name", ip + String.valueOf(i + 1) + ":" + String.valueOf(chain.ChainPort));
-//                }
-//
-//                JSONObject parent = new JSONObject();
-//                parent.put("Id", chain.ChainName);
-//                parent.put("Name", chain.ChineseName);
-//                single.put("parent", parent);
-//                children.add(single);
-//            }
-//            x++;
-//            singleChain.put("children", children);
-//            chainsInfo.add(singleChain);
-//        }
+        // int chainsize = 5;
+        //
+        //// JSONObject totalInfo = new JSONObject();
+        //// JSONArray chainsInfo = new JSONArray();
+        //
+        // int x = 0;
+        // for (CrosschainInfo chain : CrosschainInfo.values()) {
+        // JSONObject singleChain = new JSONObject();
+        // // JsonObject singleChain = new JsonObject();
+        // singleChain.put("Id", chain.ChainName);
+        // singleChain.put("Name", chain.ChineseName);
+        // JSONArray children = new JSONArray();
+        // for (int i = 0; i <= chainsize; i++) {
+        // JSONObject single = new JSONObject();
+        // single.put("Id", chain.ChainId + i);
+        // if (i==chainsize){
+        // single.put("Name", "1.92.88.254" + ":" + String.valueOf(chain.ChainPort));
+        // } else {
+        // single.put("Name", ip + String.valueOf(i + 1) + ":" +
+        // String.valueOf(chain.ChainPort));
+        // }
+        //
+        // JSONObject parent = new JSONObject();
+        // parent.put("Id", chain.ChainName);
+        // parent.put("Name", chain.ChineseName);
+        // single.put("parent", parent);
+        // children.add(single);
+        // }
+        // x++;
+        // singleChain.put("children", children);
+        // chainsInfo.add(singleChain);
+        // }
         totalInfo.put("totalInfo", chainsInfo);
         querychainresp.setRet(ResultCode.SUCCESS);
         querychainresp.setData(totalInfo);
@@ -421,50 +424,50 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
             // }
 
         } else if (portNumber.equals(fabricname)) {
-            try {
-                /* 1. 基础配置 */
-                String cryptoRoot  = System.getProperty("user.home")
-                                     + "/crosschain/fabric-samples-main/test-network";
-                String mspId       = "Org1MSP";
-                String channelName = "mychannel";
-        
-                /* 2. 路径 */
-                Path cryptoPath = Paths.get(cryptoRoot,
-                        "organizations/peerOrganizations/org1.example.com");
-                Path certFile = cryptoPath.resolve(
-                        "users/User1@org1.example.com/msp/signcerts/cert.pem");
-                Path keyDir   = cryptoPath.resolve(
-                        "users/User1@org1.example.com/msp/keystore");
-                Path tlsCert  = cryptoPath.resolve(
-                        "peers/peer0.org1.example.com/tls/ca.crt");
-        
-                /* 3. identity & signer */
-                Identity identity = newIdentity(certFile, mspId);
-                Signer   signer   = newSigner(keyDir);
-        
-                /* 4. gRPC 连接 */
-                ManagedChannel channel = newGrpcConnection(tlsCert);
-                try {
-                    Gateway gateway = Gateway.newInstance()
-                            .identity(identity)
-                            .signer(signer)
-                            .connection(channel)
-                            .evaluateOptions(o -> o.withDeadlineAfter(5, TimeUnit.SECONDS))
-                            .connect();
-        
-                    /* 5. 查链高 */
-                    long height = gateway.getNetwork(channelName).getBlockNumber();
-        
-                    chainresp.setData(new JSONObject().put("height", height));
-        
-                } finally {
-                    channel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
-                }
-        
-            } catch (Exception e) {
-                e.printStackTrace();
-                chainresp.setData("Error retrieving Fabric block height: " + e.getMessage());
-            }
+            // try {
+            // /* 1. 基础配置 */
+            // String cryptoRoot = System.getProperty("user.home")
+            // + "/crosschain/fabric-samples-main/test-network";
+            // String mspId = "Org1MSP";
+            // String channelName = "mychannel";
+
+            // /* 2. 路径 */
+            // Path cryptoPath = Paths.get(cryptoRoot,
+            // "organizations/peerOrganizations/org1.example.com");
+            // Path certFile = cryptoPath.resolve(
+            // "users/User1@org1.example.com/msp/signcerts/cert.pem");
+            // Path keyDir = cryptoPath.resolve(
+            // "users/User1@org1.example.com/msp/keystore");
+            // Path tlsCert = cryptoPath.resolve(
+            // "peers/peer0.org1.example.com/tls/ca.crt");
+
+            // /* 3. identity & signer */
+            // Identity identity = newIdentity(certFile, mspId);
+            // Signer signer = newSigner(keyDir);
+
+            // /* 4. gRPC 连接 */
+            // ManagedChannel channel = newGrpcConnection(tlsCert);
+            // try {
+            // Gateway gateway = Gateway.newInstance()
+            // .identity(identity)
+            // .signer(signer)
+            // .connection(channel)
+            // .evaluateOptions(o -> o.withDeadlineAfter(5, TimeUnit.SECONDS))
+            // .connect();
+
+            // /* 5. 查链高 */
+            // long height = gateway.getNetwork(channelName).getBlockNumber();
+
+            // chainresp.setData(new JSONObject().put("height", height));
+
+            // } finally {
+            // channel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
+            // }
+
+            // } catch (Exception e) {
+            // e.printStackTrace();
+            // chainresp.setData("Error retrieving Fabric block height: " + e.getMessage());
+            // }
         }
 
         return chainresp;
@@ -747,71 +750,71 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
             System.out.println("-------联通链区块信息查询完毕-------");
         }
 
-    else if (portNumber.equals(fabricname)) {
-            String configPath = "D:\\桌面\\fabric-samples-main\\test-network";
-            String userName   = "User1@org1.example.com";
-            String mspId      = "Org1MSP";
-            String channelId  = "mychannel";
+        else if (portNumber.equals(fabricname)) {
+            // String configPath = "D:\\桌面\\fabric-samples-main\\test-network";
+            // String userName = "User1@org1.example.com";
+            // String mspId = "Org1MSP";
+            // String channelId = "mychannel";
 
-            Path cryptoDir = Paths.get(configPath,
-                    "organizations", "peerOrganizations", "org1.example.com");
-            Path certFile = cryptoDir.resolve(
-                    "users\\User1@org1.example.com\\msp\\signcerts\\cert.pem");
-            Path keyDir   = cryptoDir.resolve(
-                    "users\\User1@org1.example.com\\msp\\keystore");
-            Path keyFile = null;
-            try {
-                keyFile = Files.list(keyDir)          // 可能抛 IOException
-                            .findFirst()
-                            .orElse(null);
-            } catch (IOException e) {
-                e.printStackTrace();
-                queryBlockInfoResp.setData("Fabric key file not found");
-                return queryBlockInfoResp;
-            }
-            if (keyFile == null) {
-                queryBlockInfoResp.setData("Fabric key file not found");
-                return queryBlockInfoResp;
-            }
+            // Path cryptoDir = Paths.get(configPath,
+            // "organizations", "peerOrganizations", "org1.example.com");
+            // Path certFile = cryptoDir.resolve(
+            // "users\\User1@org1.example.com\\msp\\signcerts\\cert.pem");
+            // Path keyDir = cryptoDir.resolve(
+            // "users\\User1@org1.example.com\\msp\\keystore");
+            // Path keyFile = null;
+            // try {
+            // keyFile = Files.list(keyDir) // 可能抛 IOException
+            // .findFirst()
+            // .orElse(null);
+            // } catch (IOException e) {
+            // e.printStackTrace();
+            // queryBlockInfoResp.setData("Fabric key file not found");
+            // return queryBlockInfoResp;
+            // }
+            // if (keyFile == null) {
+            // queryBlockInfoResp.setData("Fabric key file not found");
+            // return queryBlockInfoResp;
+            // }
 
-            try {
-                /* 1. 内存钱包 */
-                X509Certificate cert = Identities.readX509Certificate(
-                        Files.newBufferedReader(certFile));
-                PrivateKey key = Identities.readPrivateKey(
-                        Files.newBufferedReader(keyFile));
-                Wallet wallet = Wallets.newInMemoryWallet();
-                wallet.put(userName, Identities.newX509Identity(mspId, cert, key));
+            // try {
+            // /* 1. 内存钱包 */
+            // X509Certificate cert = Identities.readX509Certificate(
+            // Files.newBufferedReader(certFile));
+            // PrivateKey key = Identities.readPrivateKey(
+            // Files.newBufferedReader(keyFile));
+            // Wallet wallet = Wallets.newInMemoryWallet();
+            // wallet.put(userName, Identities.newX509Identity(mspId, cert, key));
 
-                /* 2. 连接网关 */
-                Gateway gateway = Gateway.createBuilder()
-                        .identity(wallet, userName)
-                        .networkConfig(Paths.get(configPath, "connection.yaml"))
-                        .discovery(true)
-                        .connect();
+            // /* 2. 连接网关 */
+            // Gateway gateway = Gateway.createBuilder()
+            // .identity(wallet, userName)
+            // .networkConfig(Paths.get(configPath, "connection.yaml"))
+            // .discovery(true)
+            // .connect();
 
-                /* 3. 拿到 Channel 对象（SDK 级别） */
-                Channel channel = gateway.getNetwork(channelId).getChannel();
+            // /* 3. 拿到 Channel 对象（SDK 级别） */
+            // Channel channel = gateway.getNetwork(channelId).getChannel();
 
-                /* 4. 按高度查区块（qscc） */
-                long blockNo = Long.parseLong(blockheightReq.getBlockHEIGHT());
-                BlockInfo block = channel.queryBlockByNumber(blockNo); 
-                /* 5. 封装统一格式 */
-                JSONObject blockInfo = new JSONObject();
-                blockInfo.put("blockHeight", block.getBlockNumber());
-                blockInfo.put("blockHash", Hex.encodeHexString(block.getDataHash()));
-                blockInfo.put("previousHash", Hex.encodeHexString(block.getPreviousHash()));
-                blockInfo.put("transactionCount", block.getTransactionCount());
-                queryBlockInfoResp.setRet(ResultCode.SUCCESS);
-                queryBlockInfoResp.setData(blockInfo);
+            // /* 4. 按高度查区块（qscc） */
+            // long blockNo = Long.parseLong(blockheightReq.getBlockHEIGHT());
+            // BlockInfo block = channel.queryBlockByNumber(blockNo);
+            // /* 5. 封装统一格式 */
+            // JSONObject blockInfo = new JSONObject();
+            // blockInfo.put("blockHeight", block.getBlockNumber());
+            // blockInfo.put("blockHash", Hex.encodeHexString(block.getDataHash()));
+            // blockInfo.put("previousHash", Hex.encodeHexString(block.getPreviousHash()));
+            // blockInfo.put("transactionCount", block.getTransactionCount());
+            // queryBlockInfoResp.setRet(ResultCode.SUCCESS);
+            // queryBlockInfoResp.setData(blockInfo);
 
-                gateway.close();
-                System.out.println("-------Fabric区块信息查询完毕-------");
+            // gateway.close();
+            // System.out.println("-------Fabric区块信息查询完毕-------");
 
-            } catch (Exception e) {
-                e.printStackTrace();
-                queryBlockInfoResp.setData("Fabric query failed: " + e.getMessage());
-            }
+            // } catch (Exception e) {
+            // e.printStackTrace();
+            // queryBlockInfoResp.setData("Fabric query failed: " + e.getMessage());
+            // }
         }
         return queryBlockInfoResp;
     }
@@ -835,11 +838,11 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
 
         JSONObject heightRes = (JSONObject) checkChainnewblock(chainreq).getData();
         BigInteger blockHeight = (BigInteger) heightRes.get("heightinfo");
-        if (blockHeight == null){
+        if (blockHeight == null) {
             queryNewBlock.setData("Failed to connect to the blockchain node.");
             return queryNewBlock;
         }
-        if(topN > blockHeight.intValue() + 1){
+        if (topN > blockHeight.intValue() + 1) {
             topN = blockHeight.intValue() + 1;
         }
 
@@ -869,7 +872,7 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
                 }
                 blocks.add(blockInfo);
             }
-            System.out.println("-------ETH最新"+topN+"个区块信息查询完毕-------");
+            System.out.println("-------ETH最新" + topN + "个区块信息查询完毕-------");
         } else if (portNumber.equals(CrosschainInfo.CMK.ChainPort)) {
 
             for (int i = 0; i < topN; i++) {
@@ -893,9 +896,8 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
                 }
                 blocks.add(blockInfo);
             }
-            System.out.println("-------ChainMaker最新"+topN+"个区块信息查询完毕-------");
+            System.out.println("-------ChainMaker最新" + topN + "个区块信息查询完毕-------");
         } else if (portNumber.equals(CrosschainInfo.H2C.ChainPort)) {
-
 
             for (int i = 0; i < topN; i++) {
                 JSONObject blockInfo = new JSONObject();
@@ -914,12 +916,13 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
                     blockInfo.put("previousBlockHash", tempBlockInfo.get("previousBlockHash"));
                     blockInfo.put("merkleTreeRootOfWorldState", tempBlockInfo.get("merkleTreeRootOfWorldState"));
                     blockInfo.put("merkleTreeRootOfTransactions", tempBlockInfo.get("merkleTreeRootOfTransactions"));
-                    blockInfo.put("merkleTreeRootOfTransactionState", tempBlockInfo.get("merkleTreeRootOfTransactionState"));
+                    blockInfo.put("merkleTreeRootOfTransactionState",
+                            tempBlockInfo.get("merkleTreeRootOfTransactionState"));
                     blockInfo.put("signerPubkey", tempBlockInfo.get("signerPubkey"));
                 }
                 blocks.add(blockInfo);
             }
-            System.out.println("-------H2Chain最新"+ topN +"个区块信息查询完毕-------");
+            System.out.println("-------H2Chain最新" + topN + "个区块信息查询完毕-------");
         } else if (portNumber.equals(CrosschainInfo.BuB.ChainPort)) {
 
             for (int i = 0; i < topN; i++) {
@@ -942,50 +945,53 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
                 }
                 blocks.add(blockInfo);
             }
-            System.out.println("-------BuBi最新"+ topN+"个区块信息查询完毕-------");
-        } 
-        else if (portNumber.equals(CrosschainInfo.FBC.ChainPort)) {
-//            if (!BlockchainConfig.do_update_blockchain) {
-//                for (int i = 1000; i < 1000 + topN; i++) {
-//                    JSONObject blockInfo = new JSONObject();
-//                    blockInfo.put("gasLimit", "0x0");
-//                    blockInfo.put("gasUsed", "0x0");
-//                    blockInfo.put("hash",
-//                            "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
-//                    blockInfo.put("number", i);
-//                    blockInfo.put("parentHash", "0xeccad5274949b9d25996f7a96b89c0ac5c099eb9b72cc00d65bc6ef09f7bd10b");
-//                    blockInfo.put("sealer", "0x0");
-//
-//                    String[] stringArray = {
-//                            "0471101bcf033cd9e0cbd6eef76c144e6eff90a7a0b1847b5976f8ba32b2516c0528338060a4599fc5e3bafee188bca8ccc529fbd92a760ef57ec9a14e9e4278",
-//                            "2b08375e6f876241b2a1d495cd560bd8e43265f57dc9ed07254616ea88e371dfa6d40d9a702eadfd5e025180f9d966a67f861da214dd36237b58d72aaec2e108",
-//                            "cf93054cf524f51c9fe4e9a76a50218aaa7a2ca6e58f6f5634f9c2884d2e972486c7fe1d244d4b49c6148c1cb524bcc1c99ee838bb9dd77eb42f557687310ebd",
-//                            "ed1c85b815164b31e895d3f4fc0b6e3f0a0622561ec58a10cc8f3757a73621292d88072bf853ac52f0a9a9bbb10a54bdeef03c3a8a42885fe2467b9d13da9dec" };
-//                    List<String> stringList = Arrays.asList(stringArray);
-//                    JSONArray s = new JSONArray(stringList);
-//
-//                    blockInfo.put("sealerList", s);
-//                    blockInfo.put("stateRoot", "0x9711819153f7397ec66a78b02624f70a343b49c60bc2f21a77b977b0ed91cef9");
-//                    blockInfo.put("timestamp", "0x1692f119c84");
-//                    blockInfo.put("transactionsRoot",
-//                            "0x516787f85980a86fd04b0e9ce82a1a75950db866e8cdf543c2cae3e4a51d91b7");
-//
-//                    String[] txArray = { "0xa14638d47cc679cf6eeb7f36a6d2a30ea56cb8dcf0938719ff45023a7a8edb5d",
-//                            "0xa14638d47cc679cf6eeb7f36a6d2a30ea56cb8dcf0938719ff45023a7a8edb5d"
-//                    };
-//                    List<String> txList = Arrays.asList(txArray);
-//                    JSONArray txs = new JSONArray(txList);
-//
-//                    blockInfo.put("transactions", txs);
-//                    blocks.add(blockInfo);
-//                }
-//                System.out.println("-------Fisco Bcos最新十个区块信息查询完毕-------");
-//                JSONObject tenblocks = new JSONObject();
-//                tenblocks.put("tenBlocksInfo", blocks);
-//                queryNewBlock.setRet(ResultCode.SUCCESS);
-//                queryNewBlock.setData(tenblocks);
-//                return queryNewBlock;
-//            }
+            System.out.println("-------BuBi最新" + topN + "个区块信息查询完毕-------");
+        } else if (portNumber.equals(CrosschainInfo.FBC.ChainPort)) {
+            // if (!BlockchainConfig.do_update_blockchain) {
+            // for (int i = 1000; i < 1000 + topN; i++) {
+            // JSONObject blockInfo = new JSONObject();
+            // blockInfo.put("gasLimit", "0x0");
+            // blockInfo.put("gasUsed", "0x0");
+            // blockInfo.put("hash",
+            // "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
+            // blockInfo.put("number", i);
+            // blockInfo.put("parentHash",
+            // "0xeccad5274949b9d25996f7a96b89c0ac5c099eb9b72cc00d65bc6ef09f7bd10b");
+            // blockInfo.put("sealer", "0x0");
+            //
+            // String[] stringArray = {
+            // "0471101bcf033cd9e0cbd6eef76c144e6eff90a7a0b1847b5976f8ba32b2516c0528338060a4599fc5e3bafee188bca8ccc529fbd92a760ef57ec9a14e9e4278",
+            // "2b08375e6f876241b2a1d495cd560bd8e43265f57dc9ed07254616ea88e371dfa6d40d9a702eadfd5e025180f9d966a67f861da214dd36237b58d72aaec2e108",
+            // "cf93054cf524f51c9fe4e9a76a50218aaa7a2ca6e58f6f5634f9c2884d2e972486c7fe1d244d4b49c6148c1cb524bcc1c99ee838bb9dd77eb42f557687310ebd",
+            // "ed1c85b815164b31e895d3f4fc0b6e3f0a0622561ec58a10cc8f3757a73621292d88072bf853ac52f0a9a9bbb10a54bdeef03c3a8a42885fe2467b9d13da9dec"
+            // };
+            // List<String> stringList = Arrays.asList(stringArray);
+            // JSONArray s = new JSONArray(stringList);
+            //
+            // blockInfo.put("sealerList", s);
+            // blockInfo.put("stateRoot",
+            // "0x9711819153f7397ec66a78b02624f70a343b49c60bc2f21a77b977b0ed91cef9");
+            // blockInfo.put("timestamp", "0x1692f119c84");
+            // blockInfo.put("transactionsRoot",
+            // "0x516787f85980a86fd04b0e9ce82a1a75950db866e8cdf543c2cae3e4a51d91b7");
+            //
+            // String[] txArray = {
+            // "0xa14638d47cc679cf6eeb7f36a6d2a30ea56cb8dcf0938719ff45023a7a8edb5d",
+            // "0xa14638d47cc679cf6eeb7f36a6d2a30ea56cb8dcf0938719ff45023a7a8edb5d"
+            // };
+            // List<String> txList = Arrays.asList(txArray);
+            // JSONArray txs = new JSONArray(txList);
+            //
+            // blockInfo.put("transactions", txs);
+            // blocks.add(blockInfo);
+            // }
+            // System.out.println("-------Fisco Bcos最新十个区块信息查询完毕-------");
+            // JSONObject tenblocks = new JSONObject();
+            // tenblocks.put("tenBlocksInfo", blocks);
+            // queryNewBlock.setRet(ResultCode.SUCCESS);
+            // queryNewBlock.setData(tenblocks);
+            // return queryNewBlock;
+            // }
             for (int i = 0; i < topN; i++) {
                 JSONObject blockInfo = new JSONObject();
                 BlockheightReq blockheightReq = new BlockheightReq();
@@ -996,7 +1002,7 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
                     JSONObject tempBlockInfo = (JSONObject) commonResp.getData();
                     blockInfo.put("gasLimit", tempBlockInfo.get("gasLimit"));
                     blockInfo.put("gasUsed", tempBlockInfo.get("gasUsed"));
-                    blockInfo.put("hash",tempBlockInfo.get("hash"));
+                    blockInfo.put("hash", tempBlockInfo.get("hash"));
                     blockInfo.put("number", tempBlockInfo.get("number"));
                     blockInfo.put("parentHash", tempBlockInfo.get("parentHash"));
                     blockInfo.put("sealer", tempBlockInfo.get("sealer"));
@@ -1088,8 +1094,17 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
         // String chainType = chain.getChainType();
 
         if (portNumber.equals(ethname)) {
-            Web3j web3j = Web3j.build(new HttpService("http://" + txhashreq.getChainIP()));
+
+            String wsUrl = "ws://" + ipAddress + ":" + ethWsPort;
+
             try {
+
+                // 创建 WebSocketService
+                WebSocketService webSocketService = new WebSocketService(wsUrl, true);
+                webSocketService.connect(); // 连接 WebSocket
+
+                // 创建 Web3j 实例
+                Web3j web3j = Web3j.build(webSocketService);
 
                 EthTransaction transaction = web3j.ethGetTransactionByHash(txhashreq.getTxHASH()).sendAsync().get();
 
@@ -1118,7 +1133,7 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
 
                 queryTxInfoResp.setRet(ResultCode.SUCCESS);
                 queryTxInfoResp.setData(txInfo);
-            } catch (InterruptedException | ExecutionException e) {
+            } catch (Exception e) {
                 queryTxInfoResp.setData("Failed to connect to the blockchain node.");
             }
             System.out.println("-------ETH交易信息查询完毕-------");
@@ -1165,81 +1180,204 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
             queryTxInfoResp.setData(txInfo);
 
             System.out.println("-------ChainMaker交易信息查询完毕-------");
-        }else if (portNumber.equals(fabricname)) {
-            /* ==========  0. 固定配置  ========== */
-            String configPath = "D:\\桌面\\fabric-samples-main\\test-network";
-            String userName   = "User1@org1.example.com";
-            String mspId      = "Org1MSP";
-            String channelId  = "mychannel";
-        
-            /* ==========  1. 证书/密钥路径  ========== */
-            Path cryptoDir = Paths.get(configPath,
-                    "organizations", "peerOrganizations", "org1.example.com");
-            Path certFile = cryptoDir.resolve(
-                    "users\\User1@org1.example.com\\msp\\signcerts\\cert.pem");
-            Path keyDir   = cryptoDir.resolve(
-                    "users\\User1@org1.example.com\\msp\\keystore");
-            Path keyFile;
+        } else if (portNumber.equals(bubiname)) {
+            String targetUrl = "http://" + ipAddress + ":19333/getTransactionHistory?hash=" + txhashreq.getTxHASH();
+            String logs = "";
             try {
-                keyFile = Files.list(keyDir).findFirst().orElse(null);
-            } catch (IOException e) {
-                queryTxInfoResp.setData("Fabric key file not found");
-                return queryTxInfoResp;
-            }
-            if (keyFile == null) {
-                queryTxInfoResp.setData("Fabric key file not found");
-                return queryTxInfoResp;
-            }
-        
-            try {
-                /* 2. 内存 Wallet */
-                X509Certificate cert = Identities.readX509Certificate(
-                        Files.newBufferedReader(certFile));
-                PrivateKey key = Identities.readPrivateKey(
-                        Files.newBufferedReader(keyFile));
-                Wallet wallet = Wallets.newInMemoryWallet();
-                wallet.put(userName, Identities.newX509Identity(mspId, cert, key));
-        
-                /* 3. Gateway 连接 */
-                Gateway gateway = Gateway.createBuilder()
-                        .identity(wallet, userName)
-                        .networkConfig(Paths.get(configPath, "connection.yaml"))
-                        .discovery(true)
-                        .connect();
-        
-                /* 4. 获取 Channel 对象（SDK 级） */
-                Channel channel = gateway.getNetwork(channelId).getChannel();
-        
-                // 5. 用 qscc 查交易所在区块
-                String txId = txhashreq.getTxHASH();
-                long blockNo = channel.queryBlockByTransactionID(txId).getBlockNumber(); // 2.2.9 有这个方法
-                BlockInfo block = channel.queryBlockByNumber(blockNo);
+                URL url = new URL(targetUrl);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("GET");
 
-                // 6. 封装（2.2.9 只能拿到这些）
+                BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                String inputLine;
+                StringBuilder response = new StringBuilder();
+                while ((inputLine = in.readLine()) != null) {
+                    response.append(inputLine);
+                }
+                in.close();
+                logs = response.toString();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            try {
+                JsonObject root = JsonParser.parseString(logs).getAsJsonObject();
+
+                int errorCode = root.get("error_code").getAsInt();
+                if (errorCode != 0) {
+                    queryTxInfoResp.setRet(ResultCode.FAILURE);
+                    queryTxInfoResp.setMsg("查询失败，error_code=" + errorCode);
+                    return queryTxInfoResp;
+                }
+
+                JsonObject result = root.getAsJsonObject("result");
+                JsonArray transactions = result.getAsJsonArray("transactions");
+                if (transactions == null || transactions.size() == 0) {
+                    queryTxInfoResp.setRet(ResultCode.FAILURE);
+                    queryTxInfoResp.setMsg("未找到交易记录");
+                    return queryTxInfoResp;
+                }
+
+                // 取第一条交易
+                JsonObject txObj = transactions.get(0).getAsJsonObject();
+                JsonObject transaction = txObj.getAsJsonObject("transaction");
+                JsonArray operations = transaction.getAsJsonArray("operations");
+
+                // ============= 基础字段 =============
+                String txHash = txObj.has("hash") ? txObj.get("hash").getAsString() : "";
+                String from = transaction.has("source_address") ? transaction.get("source_address").getAsString() : "";
+                String to = "";
+                String inputHex = "";
+                if (operations != null && operations.size() > 0) {
+                    JsonObject op = operations.get(0).getAsJsonObject();
+                    JsonObject payCoin = op.getAsJsonObject("pay_coin");
+                    if (payCoin != null) {
+                        to = payCoin.has("dest_address") ? payCoin.get("dest_address").getAsString() : "";
+                        inputHex = payCoin.has("input") ? payCoin.get("input").getAsString() : "";
+                    }
+                }
+
+                // 状态
+                String status = (txObj.get("error_code").getAsInt() == 0) ? "success" : "failed";
+                BigInteger amount = BigInteger.ZERO;
+
+                // ============= 扩展字段 =============
+                long blockHeight = txObj.has("ledger_seq") ? txObj.get("ledger_seq").getAsLong() : -1;
+                long closeTime = txObj.has("close_time") ? txObj.get("close_time").getAsLong() : 0L;
+                long timestamp = closeTime / 1000; // 近似换算为秒级时间戳
+                String rwSetHash = ""; // 布比没有返回，可置空
+                String contractName = "";
+                String method = "";
+                String signer = "";
+                String signature = "";
+
+                // 取签名信息
+                JsonArray sigs = txObj.getAsJsonArray("signatures");
+                if (sigs != null && sigs.size() > 0) {
+                    JsonObject sigObj = sigs.get(0).getAsJsonObject();
+                    signer = sigObj.has("public_key") ? sigObj.get("public_key").getAsString() : "";
+                    signature = sigObj.has("sign_data") ? sigObj.get("sign_data").getAsString() : "";
+                }
+
+                // 如果存在contract_tx_hashes，可推测这是合约调用
+                if (txObj.has("contract_tx_hashes")) {
+                    JsonArray contractHashes = txObj.getAsJsonArray("contract_tx_hashes");
+                    if (contractHashes.size() > 0) {
+                        contractName = "contract_" + contractHashes.get(0).getAsString().substring(0, 8);
+                        method = "invoke";
+                    }
+                }
+
+                // ============= 构造返回 JSON =============
                 JSONObject txInfo = new JSONObject();
-                txInfo.put("txHash", txId);
-                txInfo.put("blockNumber", BigInteger.valueOf(blockNo));
-                txInfo.put("blockHash", Hex.encodeHexString(block.getDataHash()));
-                txInfo.put("from", "");                  // 2.2.9 拿不到 creator
-                txInfo.put("to", "");
-                txInfo.put("contractName", "");          // 2.2.9 拿不到链码名
-                txInfo.put("method", "");
-                txInfo.put("signature", "");             // 2.2.9 拿不到签名
-                txInfo.put("timeStamp", "");             // 2.2.9 拿不到时间戳
-                txInfo.put("status", "VALID");           // 2.2.9 也拿不到验证位，直接写 VALID
+                txInfo.put("txHash", txHash);
+                txInfo.put("txId", txHash); // 保留兼容字段
+                txInfo.put("from", from);
+                txInfo.put("to", to);
+                txInfo.put("amount", amount);
+                txInfo.put("status", status);
+                txInfo.put("raw_input", inputHex);
+
+                txInfo.put("blockHeight", blockHeight);
+                txInfo.put("blockTimestamp", closeTime);
+                txInfo.put("timestamp", timestamp);
+                txInfo.put("rwSetHash", rwSetHash);
+                txInfo.put("signature", signature);
+                txInfo.put("signer", signer);
+                txInfo.put("contractName", contractName);
+                txInfo.put("method", method);
+
+                // 也返回请求hash方便比对
+                txInfo.put("requestTxHash", txhashreq.getTxHASH());
 
                 queryTxInfoResp.setRet(ResultCode.SUCCESS);
                 queryTxInfoResp.setData(txInfo);
-                        
-                gateway.close();
-                System.out.println("-------Fabric交易信息查询完毕-------");
-        
+
+                System.out.println("-------BuBi交易信息查询完毕-------");
+
             } catch (Exception e) {
                 e.printStackTrace();
-                queryTxInfoResp.setData("Fabric query failed: " + e.getMessage());
+                queryTxInfoResp.setRet(ResultCode.FAILURE);
+                queryTxInfoResp.setMsg("解析布比链交易返回数据失败");
             }
-        } 
-        
+        }
+
+        else if (portNumber.equals(fabricname)) {
+            // /* ========== 0. 固定配置 ========== */
+            // String configPath = "D:\\桌面\\fabric-samples-main\\test-network";
+            // String userName = "User1@org1.example.com";
+            // String mspId = "Org1MSP";
+            // String channelId = "mychannel";
+
+            // /* ========== 1. 证书/密钥路径 ========== */
+            // Path cryptoDir = Paths.get(configPath,
+            // "organizations", "peerOrganizations", "org1.example.com");
+            // Path certFile = cryptoDir.resolve(
+            // "users\\User1@org1.example.com\\msp\\signcerts\\cert.pem");
+            // Path keyDir = cryptoDir.resolve(
+            // "users\\User1@org1.example.com\\msp\\keystore");
+            // Path keyFile;
+            // try {
+            // keyFile = Files.list(keyDir).findFirst().orElse(null);
+            // } catch (IOException e) {
+            // queryTxInfoResp.setData("Fabric key file not found");
+            // return queryTxInfoResp;
+            // }
+            // if (keyFile == null) {
+            // queryTxInfoResp.setData("Fabric key file not found");
+            // return queryTxInfoResp;
+            // }
+
+            // try {
+            // /* 2. 内存 Wallet */
+            // X509Certificate cert = Identities.readX509Certificate(
+            // Files.newBufferedReader(certFile));
+            // PrivateKey key = Identities.readPrivateKey(
+            // Files.newBufferedReader(keyFile));
+            // Wallet wallet = Wallets.newInMemoryWallet();
+            // wallet.put(userName, Identities.newX509Identity(mspId, cert, key));
+
+            // /* 3. Gateway 连接 */
+            // Gateway gateway = Gateway.createBuilder()
+            // .identity(wallet, userName)
+            // .networkConfig(Paths.get(configPath, "connection.yaml"))
+            // .discovery(true)
+            // .connect();
+
+            // /* 4. 获取 Channel 对象（SDK 级） */
+            // Channel channel = gateway.getNetwork(channelId).getChannel();
+
+            // // 5. 用 qscc 查交易所在区块
+            // String txId = txhashreq.getTxHASH();
+            // long blockNo = channel.queryBlockByTransactionID(txId).getBlockNumber(); //
+            // 2.2.9 有这个方法
+            // BlockInfo block = channel.queryBlockByNumber(blockNo);
+
+            // // 6. 封装（2.2.9 只能拿到这些）
+            // JSONObject txInfo = new JSONObject();
+            // txInfo.put("txHash", txId);
+            // txInfo.put("blockNumber", BigInteger.valueOf(blockNo));
+            // txInfo.put("blockHash", Hex.encodeHexString(block.getDataHash()));
+            // txInfo.put("from", ""); // 2.2.9 拿不到 creator
+            // txInfo.put("to", "");
+            // txInfo.put("contractName", ""); // 2.2.9 拿不到链码名
+            // txInfo.put("method", "");
+            // txInfo.put("signature", ""); // 2.2.9 拿不到签名
+            // txInfo.put("timeStamp", ""); // 2.2.9 拿不到时间戳
+            // txInfo.put("status", "VALID"); // 2.2.9 也拿不到验证位，直接写 VALID
+
+            // queryTxInfoResp.setRet(ResultCode.SUCCESS);
+            // queryTxInfoResp.setData(txInfo);
+
+            // gateway.close();
+            // System.out.println("-------Fabric交易信息查询完毕-------");
+
+            // } catch (Exception e) {
+            // e.printStackTrace();
+            // queryTxInfoResp.setData("Fabric query failed: " + e.getMessage());
+            // }
+        }
+
         else {
             String targetUrl = "http://" + ipAddress + ":8000/api/blockChain/transactionResult?transactionId="
                     + txhashreq.getTxHASH();
@@ -1300,7 +1438,7 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
 
             System.out.println("-------H2Chain交易信息查询完毕-------");
         }
-        
+
         return queryTxInfoResp;
     }
 

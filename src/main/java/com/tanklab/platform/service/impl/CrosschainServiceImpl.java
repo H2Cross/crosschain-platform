@@ -474,7 +474,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
 
             case "bubi":
                 String bubiCmd = String.format(
-                        "source /etc/profile && source ~/.bashrc && cd /root/shell && nohup /root/shell/bubi_start.sh %s %s %s %d > bubi.log 2>&1 &",
+                        "source /etc/profile && source ~/.bashrc && cd /root/shell && nohup /root/shell/bubi_start.sh %s %s %s %d source > bubi.log 2>&1 &",
                         getChainId(srcChainType, srcIp), getChainId(dstChainType, dstIp), dstIp, srcPort(dstChainType));
 
                 String bubiResult = SSHConfig.executeCMD(bubiCmd, "UTF-8");
@@ -529,8 +529,8 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
             case "bubi":
                 // test
                 String bubiCmd = String.format(
-                        "source /etc/profile && source ~/.bashrc && cd /root/shell && nohup /root/shell/bubi_start.sh %s %s %s %d > bubi.log 2>&1 &",
-                        getChainId(srcChainType, srcIp), getChainId(dstChainType, dstIp), dstIp, srcPort(dstChainType));
+                        "source /etc/profile && source ~/.bashrc && cd /root/shell && nohup /root/shell/bubi_start.sh %s %s %s %d target > bubi.log 2>&1 &",
+                        getChainId(srcChainType, srcIp), getChainId(dstChainType, dstIp), srcIp, srcPort(srcChainType));
                 // String bubiCmd = String.format(
                 // "source /etc/profile && source ~/.bashrc && cd /root/shell && nohup
                 // /root/shell/bubi_start.sh %s %s %s %d > bubi.log 2>&1 &",
@@ -809,7 +809,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                         String ethLogsH2c = SSHConfig.executeCMD(ethLogCmdH2c, "UTF-8");
 
                         // 提取源链请求哈希
-                        String h2cReqPattern = "Obtained request cmhash on the source chain\\(chainid: 13002, cmhash: ([a-fA-F0-9]+)\\)";
+                        String h2cReqPattern = "Obtained request cmhash on the source chain\\(chainid: [0-9]+, cmhash: ([a-fA-F0-9]+)\\)";
                         Pattern h2cReqRegex = Pattern.compile(h2cReqPattern);
                         Matcher h2cReqMatcher = h2cReqRegex.matcher(h2cSrcLogs);
                         srcReqHash = h2cReqMatcher.find() ? h2cReqMatcher.group(1) : "";
@@ -837,7 +837,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                         String cmFromEthLogs = SSHConfig.executeCMD(cmFromEthLogCmd, "UTF-8");
 
                         // 提取源链请求哈希
-                        String h2cReqPattern = "\\[DEBG\\]:\\s+Obtained request cmhash on the source chain\\(chainid: 13002, cmhash: ([a-fA-F0-9]+)\\)";
+                        String h2cReqPattern = "\\[DEBG\\]:\\s+Obtained request cmhash on the source chain\\(chainid: [0-9]+, cmhash: ([a-fA-F0-9]+)\\)";
                         Pattern h2cReqRegex = Pattern.compile(h2cReqPattern);
                         Matcher h2cReqMatcher = h2cReqRegex.matcher(h2cSrcLogs);
                         srcReqHash = h2cReqMatcher.find() ? h2cReqMatcher.group(1) : "";
@@ -864,7 +864,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                         String bubiLogs = SSHConfig.executeCMD(bubiLogCmd, "UTF-8");
 
                         // 提取源链请求哈希（从bubiResult中提取）
-                        String h2cReqPattern = "Obtained request cmhash on the source chain\\(chainid: 13002, cmhash: ([a-fA-F0-9]+)\\)";
+                        String h2cReqPattern = "Obtained request cmhash on the source chain\\(chainid: [0-9]+, cmhash: ([a-fA-F0-9]+)\\)";
                         Pattern h2cReqRegex = Pattern.compile(h2cReqPattern);
                         Matcher h2cReqMatcher = h2cReqRegex.matcher(h2cSrcLogs);
                         srcReqHash = h2cReqMatcher.find() ? h2cReqMatcher.group(1) : "";
