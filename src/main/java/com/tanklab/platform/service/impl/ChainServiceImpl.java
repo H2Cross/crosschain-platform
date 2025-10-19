@@ -304,7 +304,7 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
                 e.printStackTrace();
             }
         } else if (portNumber.equals(bubiname)) {
-            String targetUrl = "http://" + ipAddress + ":19333/getLedger";
+            String targetUrl = "http://" + ipAddress + ":19333/getLedger?seq=";
             try {
                 URL url = new URL(targetUrl);
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -327,102 +327,6 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        } else if (portNumber.equals(liantongname)) {
-            // String targetUrl =
-            // "https://121.37.119.118:8443/api/baas/explorer/unicom/blockchains/4e8776c142f845e589bd00db6448d449/channels/ch1/blocks";
-            // String authorizationToken = chainreq.getAuthorizationToken();
-            //
-            // String logs = "";
-            //
-            // try {
-            // // 禁用 SSL 验证
-            // disableSSLVerification();
-            //
-            // // 创建URL对象
-            // URL url = new URL(targetUrl);
-            // // 打开连接
-            // HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
-            // connection.setRequestMethod("GET");
-            //
-            // // 设置Authorization头部
-            // connection.setRequestProperty("authorization", authorizationToken);
-            //
-            // // 读取响应数据
-            // BufferedReader in = new BufferedReader(new
-            // InputStreamReader(connection.getInputStream()));
-            // String inputLine;
-            // StringBuilder response = new StringBuilder();
-            // while ((inputLine = in.readLine()) != null) {
-            // response.append(inputLine);
-            // }
-            // in.close();
-            //
-            // BigInteger height =
-            // JsonParser.parseString(response.toString()).getAsJsonObject()
-            // .get("total_block_count").getAsBigInteger().subtract(BigInteger.valueOf(1));
-            // JSONObject heightinfo = new JSONObject();
-            // heightinfo.put("heightinfo", height);
-            // chainresp.setData(heightinfo);
-            // } catch (IOException e) {
-            // e.printStackTrace();
-            // }
-            // } else if (portNumber.equals(fabricname)) {
-            // try {
-            // /* ====== 1. 证书路径（按你本机实际改） ====== */
-            // Path cryptoPath =
-            // Paths.get("D:\\桌面\\fabric-samples-main\\test-network\\organizations\\peerOrganizations\\org1.example.com");
-            // Path certFile =
-            // cryptoPath.resolve("users/User1@org1.example.com\\msp\\signcerts\\cert.pem");
-            // Path keyFile =
-            // cryptoPath.resolve("users/User1@org1.example.com\\msp\\keystore\\*_sk"); //
-            // 真实文件名
-            // Path tlsFile =
-            // cryptoPath.resolve("peers\\peer0.org1.example.com\\tls\\ca.crt");
-
-            // /* ====== 2. 构建 Identity（2.2.9 Wallet 入口） ====== */
-            // X509Certificate certificate =
-            // Identities.readX509Certificate(Files.newBufferedReader(certFile));
-            // PrivateKey privateKey =
-            // Identities.readPrivateKey(Files.newBufferedReader(keyFile));
-            // Wallet wallet = Wallets.newInMemoryWallet(); // 2.2.9 唯一入口
-            // wallet.put("user1", Identities.newX509Identity("Org1MSP", certificate,
-            // privateKey)); // 三参重载
-
-            // /* ====== 3. gRPC 连接 ====== */
-            // ManagedChannel channel = NettyChannelBuilder.forTarget(ipAddress + ":" +
-            // portNumber)
-            // .sslContext(GrpcSslContexts.forClient()
-            // .trustManager(tlsFile.toFile())
-            // .build())
-            // .overrideAuthority("peer0.org1.example.com")
-            // .build();
-
-            // /* ====== 4. 创建 Gateway（2.2.9 链式 Builder） ====== */
-            // try (Gateway gateway = Gateway.create()
-            // .wallet(wallet) // 2.2.9 推荐入口
-            // .identity("user1") // wallet 里别名
-            // .connection(channel)
-            // .evaluateOptions(o -> o.withDeadlineAfter(5, TimeUnit.SECONDS))
-            // .build()) {
-
-            // /* ====== 5. 查询最新区块高度 ====== */
-            // Network network = gateway.getNetwork("mychannel");
-            // BigInteger blockNumber = network.getBlockNumber(); // SDK 已封装
-
-            // JSONObject heightinfo = new JSONObject();
-            // heightinfo.put("heightinfo", blockNumber);
-            // chainresp.setData(heightinfo);
-
-            // } finally {
-            // channel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
-            // }
-
-            // } catch (Exception e) {
-            // e.printStackTrace();
-            // chainresp.setData("Error retrieving Fabric block height.");
-            // }
-            // }
-
         } else if (portNumber.equals(fabricname)) {
             // try {
             // /* 1. 基础配置 */
@@ -933,11 +837,12 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
                 CommonResp commonResp = checkHeightInfo(blockheightReq);
                 if (Objects.equals(commonResp.getCode(), ResultCode.SUCCESS.Code)) {
                     JSONObject tempBlockInfo = (JSONObject) commonResp.getData();
-                    blockInfo.put("blockHeight", tempBlockInfo.get("blockHeight"));
+                    blockInfo.put("blockHeight", blockHeight.subtract(BigInteger.valueOf(i)).toString());
                     blockInfo.put("accountTreeHash", tempBlockInfo.get("accountTreeHash"));
                     blockInfo.put("closeTime", tempBlockInfo.get("closeTime"));
                     blockInfo.put("consensusValueHash", tempBlockInfo.get("consensusValueHash"));
                     blockInfo.put("feesHash", tempBlockInfo.get("feesHash"));
+                    blockInfo.put("blockHash", tempBlockInfo.get("hash")); // 原hash字段改名为blockHash
                     blockInfo.put("hash", tempBlockInfo.get("hash"));
                     blockInfo.put("previousHash", tempBlockInfo.get("previousHash"));
                     blockInfo.put("validatorsHash", tempBlockInfo.get("validatorsHash"));
