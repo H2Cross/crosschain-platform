@@ -19,7 +19,7 @@ public interface CrosschainService extends IService<Crosschain> {
 
     //CommonResp doCross(int param, int crosstype, int crossFrom, int crossTo);
 
-    CommonResp queryAllCrossTx();
+    CommonResp queryAllCrossTx(Integer txId);
 
     CommonResp queryTxInfo(String txHash, Integer txId);
 

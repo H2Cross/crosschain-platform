@@ -28,8 +28,8 @@ public class CrosschainController {
 
     @ApiOperation(value="查询历史跨链记录")
     @GetMapping("/queryAllCrossTx")
-    public CommonResp QueryChainInfo(){
-        return crosschainService.queryAllCrossTx();
+    public CommonResp QueryChainInfo(@RequestParam(required = false) Integer txId){
+        return crosschainService.queryAllCrossTx(txId);
     }
 
     @ApiOperation(value = "查询某个交易的具体信息")

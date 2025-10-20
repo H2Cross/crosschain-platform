@@ -48,13 +48,18 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
     public CrosschainServiceImpl CrosschainService;
 
     @Override
-    public CommonResp queryAllCrossTx() {
+    public CommonResp queryAllCrossTx(Integer txId) {
         CommonResp response = new CommonResp();
 
         try {
             // 使用QueryWrapper构建查询条件
             QueryWrapper<Crosschain> wrapper = new QueryWrapper<>();
-            // 可以根据需要添加更多的查询条件
+            
+            // 如果提供了txId且不为空，则根据txId查询
+            if (txId != null) {
+                wrapper.eq("tx_id", txId);
+            }
+            
             // 执行查询
             List<Crosschain> crosschainList = crosschainMapper.selectList(wrapper);
             System.out.println(crosschainList);
@@ -129,6 +134,8 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
             resultObj.put("dstPort", crosschain.getDstPort());
             resultObj.put("srcHash", crosschain.getSrcHash());
             resultObj.put("dstHash", crosschain.getDstHash());
+            resultObj.put("response_hash", crosschain.getResponseHash());
+            resultObj.put("txTime", crosschain.getTxTime());
 
             // 设置响应数据
             response.setRet(ResultCode.SUCCESS);
