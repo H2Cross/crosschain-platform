@@ -23,7 +23,7 @@ import java.util.Map;
 public class GlobalResponseWrapper implements ResponseBodyAdvice<Object> {
 
     private final HttpServletRequest request;
-    private final ObjectMapper objectMapper; // 用于把任意对象转成Map
+    private final ObjectMapper objectMapper;
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
 
     public GlobalResponseWrapper(HttpServletRequest request, ObjectMapper objectMapper) {
@@ -33,7 +33,8 @@ public class GlobalResponseWrapper implements ResponseBodyAdvice<Object> {
 
     @Override
     public boolean supports(MethodParameter returnType, Class<? extends HttpMessageConverter<?>> converterType) {
-        return true; // 拦截所有返回
+        // 拦截所有接口响应
+        return true;
     }
 
     @Override
@@ -42,7 +43,7 @@ public class GlobalResponseWrapper implements ResponseBodyAdvice<Object> {
                                   org.springframework.http.server.ServerHttpRequest req,
                                   org.springframework.http.server.ServerHttpResponse res) {
 
-        // 1) 先把耗时打印出来（这样会被日志捕获到）
+        // ✅ 1️⃣ 计算接口耗时（输出到控制台并捕获进日志）
         Object startTimeObj = request.getAttribute("startTime");
         if (startTimeObj != null) {
             long startTime = (long) startTimeObj;
@@ -59,46 +60,53 @@ public class GlobalResponseWrapper implements ResponseBodyAdvice<Object> {
                     duration);
         }
 
-        // 2) 停止捕获，得到多行日志字符串
+        // ✅ 2️⃣ 停止日志捕获（其他接口即便不返回 result，也会停止捕获）
         String logs = LogCapture.stop(request);
         if (logs == null) logs = "";
         logs = logs.trim();
 
-        // 3) 统一把返回体转成 Map，再在同一层级增加 result 字段
+        // ✅ 3️⃣ 默认：不改变原接口结构
+        Object finalBody = body;
+
         try {
-            Map<String, Object> flat = new LinkedHashMap<>();
+            // ✅ 仅在指定接口生效
+            String path = request.getRequestURI();
+            if (path != null && path.equals("/platform/crosschain/execute/full")) {
+                // 转为Map结构以便插入字段
+                Map<String, Object> root;
+                if (body instanceof Map) {
+                    root = new LinkedHashMap<>();
+                    Map<?, ?> raw = (Map<?, ?>) body;
+                    for (Map.Entry<?, ?> e : raw.entrySet()) {
+                        root.put(String.valueOf(e.getKey()), e.getValue());
+                    }
+                } else {
+                    root = objectMapper.convertValue(body, new TypeReference<Map<String, Object>>() {});
+                }
 
-            if (body instanceof Map) {
-                // 3a) 如果本身就是Map，安全复制一份
-                Map<?, ?> raw = (Map<?, ?>) body;
-                for (Map.Entry<?, ?> e : raw.entrySet()) {
-                    flat.put(String.valueOf(e.getKey()), e.getValue());
+                // 获取 data 字段并写入 result
+                Object dataObj = root.get("data");
+                if (dataObj instanceof Map) {
+                    Map<String, Object> dataMap = new LinkedHashMap<>();
+                    for (Map.Entry<?, ?> e : ((Map<?, ?>) dataObj).entrySet()) {
+                        dataMap.put(String.valueOf(e.getKey()), e.getValue());
+                    }
+                    dataMap.put("result", logs);
+                    root.put("data", dataMap);
+                } else {
+                    // data 不是 Map（极少见），则包装成 Map
+                    Map<String, Object> dataMap = new LinkedHashMap<>();
+                    dataMap.put("value", dataObj);
+                    dataMap.put("result", logs);
+                    root.put("data", dataMap);
                 }
-            } else if (body != null && !(body instanceof String)) {
-                // 3b) 如果是POJO，转成Map
-                Map<String, Object> converted = objectMapper.convertValue(body, new TypeReference<Map<String, Object>>() {});
-                if (converted != null) {
-                    flat.putAll(converted);
-                }
-            } else {
-                // 3c) 如果是String（极少数接口可能返回纯字符串），包装成扁平结构
-                flat.put("code", "0");
-                flat.put("msg", "success");
-                flat.put("data", body);
+
+                finalBody = root; // 替换返回体
             }
-
-            // 同级追加 result 字段
-            flat.put("result", logs);
-            return flat;
-
-        } catch (Exception ex) {
-            // 兜底：转换失败时，仍保证返回扁平结构
-            Map<String, Object> fallback = new LinkedHashMap<>();
-            fallback.put("code", "0");
-            fallback.put("msg", "success");
-            fallback.put("data", body);
-            fallback.put("result", logs);
-            return fallback;
+        } catch (Exception e) {
+            e.printStackTrace(); // 避免吞异常
         }
+
+        return finalBody;
     }
 }
