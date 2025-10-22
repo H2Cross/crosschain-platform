@@ -656,7 +656,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
 
                     // 执行以太坊跨链命令
                     String ethCmd = String.format(
-                            "source /etc/profile && source ~/.bashrc && cd ~/CIPS-Gemini-v1/CIPS-Gemini-Ethereum && ./helper.sh SendCCMsg ws://127.0.0.1:10026 contract_addresses_%d.toml %d 1 1",
+                            "source /etc/profile && source ~/.bashrc && cd ~/CIPS-Gemini-v1/CIPS-Gemini-Ethereum && ./helper.sh SendCCMsg ws://127.0.0.1:10026 contract_addresses_%d.toml %d "+srcappId+" "+dstappId+" "+appArgs,
                             srcChainId, getChainId(dstChainType, dstIp));
                     String ethResult = SSHConfig.executeCMD(ethCmd, "UTF-8");
 
@@ -907,7 +907,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
 
                 case "chainmaker":
                     // 执行长安链跨链命令
-                    String cmCmd = "source /etc/profile && source ~/.bashrc && cd /root/CIPS-Gemini-v1/CIPS-Gemini-ChainMaker && go run main.go send 1";
+                    String cmCmd = "source /etc/profile && source ~/.bashrc && cd /root/CIPS-Gemini-v1/CIPS-Gemini-ChainMaker && go run main.go send 1 "+appArgs;
                     String cmResult = SSHConfig.executeCMD(cmCmd, "UTF-8");
 
                     // 等待5秒，确保日志已经生成
@@ -1044,7 +1044,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                     break;
                 case "bubi":
                     // 执行布比链跨链命令
-                    String bubiCmd = "source /etc/profile && source ~/.bashrc && cd /root/CIPS-Gemini-v1/CIPS-Gemini-Bubi && docker exec crossbubi_container go run main.go send";
+                    String bubiCmd = "source /etc/profile && source ~/.bashrc && cd /root/CIPS-Gemini-v1/CIPS-Gemini-Bubi && docker exec crossbubi_container go run main.go send "+srcappId+" "+dstappId+" "+appArgs;
                     String bubiResult = SSHConfig.executeCMD(bubiCmd, "UTF-8");
 
                     // 打印命令输出用于调试
