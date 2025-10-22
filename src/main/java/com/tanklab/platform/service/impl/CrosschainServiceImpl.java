@@ -18,9 +18,12 @@ import com.tanklab.platform.ds.resp.CommonResp;
 
 import com.tanklab.platform.entity.Crosschain;
 import com.tanklab.platform.entity.Sys;
+import com.tanklab.platform.entity.User;
 import com.tanklab.platform.mapper.CrosschainMapper;
+import com.tanklab.platform.mapper.UserMapper;
 import com.tanklab.platform.service.CrosschainService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.bouncycastle.oer.Switch;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -44,8 +47,12 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
 
     @Autowired
     private CrosschainMapper crosschainMapper;
+
     @Autowired
     public CrosschainServiceImpl CrosschainService;
+
+    @Autowired
+    private UserMapper userMapper;
 
     @Override
     public CommonResp queryAllCrossTx(Integer txId) {
@@ -1213,8 +1220,19 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
      * 执行完整的跨链操作（包括启动网关和执行跨链）
      */
     @Override
-    public CommonResp executeFullCrossChain(String srcIp, String srcChainType, String dstIp, String dstChainType,String relayIp,String srcappId,String dstappId,String appArgs) {
+    public CommonResp executeFullCrossChain(String srcIp, String srcChainType, String dstIp, String dstChainType,String relayIp,String srcappId,String dstappId,String appArgs,String token) {
         CommonResp response = new CommonResp();
+
+        QueryWrapper<User> wrapper = new QueryWrapper<>();
+        wrapper.eq("token", token);
+        User user = userMapper.selectOne(wrapper);
+        if (appArgs.contains("Access")){// 如果是带权限控制，就把Access去掉变成普通的调用
+            String[] spl = appArgs.split("Access");
+            appArgs = spl[0] + spl[1];
+            if (user.getAuthority() == 0) {// 没有权限直接退出
+                response.setRet(ResultCode.AUTH_ERROR);
+            }
+        }
 
         if(srcappId==null || srcappId.isEmpty()){
             srcappId="";

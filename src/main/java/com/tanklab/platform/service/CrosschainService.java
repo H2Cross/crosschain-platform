@@ -57,5 +57,5 @@ public interface CrosschainService extends IService<Crosschain> {
      * @param relayIp 中继链服务器IP
      * @return 跨链操作结果
      */
-    CommonResp executeFullCrossChain(String srcIp, String srcChainType, String dstIp, String dstChainType, String relayIp,String srcappId,String dstappId,String appArgs);
+    CommonResp executeFullCrossChain(String srcIp, String srcChainType, String dstIp, String dstChainType, String relayIp,String srcappId,String dstappId,String appArgs,String token);
 }

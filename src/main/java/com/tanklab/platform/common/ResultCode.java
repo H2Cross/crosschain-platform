@@ -12,7 +12,7 @@ public enum ResultCode {
     TOKEN_ERROR("1006","Token Error!"),
     NOT_MATCH_ERROR("1007","存在不匹配问题"),
 
-    PROCESS_ERROR("1008","The Ox Cannot Process Again!")
+    AUTH_ERROR("1008","用户无权限！")
     ;
     public String Code;
     public String Msg;

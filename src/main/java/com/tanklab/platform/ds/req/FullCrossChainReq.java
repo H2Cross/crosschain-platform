@@ -30,4 +30,7 @@ public class FullCrossChainReq {
 
     @ApiModelProperty(value = "应用参数")
     private String appArgs;
+
+    @ApiModelProperty(value = "用户token")
+    private String token;
 } 

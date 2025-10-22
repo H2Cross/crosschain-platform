@@ -90,7 +90,8 @@ public class CrosschainController {
             req.getRelayIp(),
             req.getSrcappId(),
             req.getDstappId(),
-            req.getAppArgs()
+            req.getAppArgs(),
+            req.getToken()
         );
     }
 }
