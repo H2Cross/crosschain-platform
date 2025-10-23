@@ -521,7 +521,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                 // todo: for local test
                 String cmCmd = String.format(
                         "source /etc/profile && source ~/.bashrc && cd /root/shell && nohup /root/shell/chainmaker_start1.sh %s %s %d > chainmaker.log 2>&1 &",
-                        getChainId(dstChainType, dstIp), dstIp, srcPort(dstChainType));
+                        getChainId(srcChainType, srcIp), srcIp, srcPort(dstChainType));
                 String cmResult = SSHConfig.executeCMD(cmCmd, "UTF-8");
                 resultObj.put("chainmakerStartResult_" + dstIp, "长安链网关启动成功");
                 resultObj.put("chainmakerStartLog_" + dstIp, cmResult);
