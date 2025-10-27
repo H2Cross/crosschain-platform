@@ -1,0 +1,39 @@
+[32m2025-03-13 06:36:05	[INFO]:	Start source relayer...[39m
+[32m2025-03-13 06:36:05	[INFO]:	source chain: prepare relayer...[39m
+[34m2025-03-13 06:36:05	[DEBG]:	chainsdk init sucess @ ./sdkconfigs/chain1_sdkconfig1.yml[39m
+[32m2025-03-13 06:36:05	[INFO]:	source chain: init aggregator...[39m
+[36m2025-03-13 06:36:05	[OK]:	source chain: init aggregator done with result contract_result:<result:"result in init p:[11002 cappreg ctsareg ctsmreg cverifyreg ctpreg]" message:"Success" gas_used:142 contract_event:<topic:"InitAggr" tx_id:"182c4950710ce5bfca91ac651edc4c912d56eee93b774784b667476a57dbb13b" contract_name:"caggr" event_data:"result in init p:[11002 cappreg ctsareg ctsmreg cverifyreg ctpreg]" event_data:"" > > tx_id:"182c4950710ce5bfca91ac651edc4c912d56eee93b774784b667476a57dbb13b" tx_timestamp:1741847765 tx_block_height:35 [39m
+[32m2025-03-13 06:36:05	[INFO]:	source chain: make config...[39m
+[36m2025-03-13 06:36:05	[OK]:	source chain: make config done[39m
+[36m2025-03-13 06:36:05	[OK]:	source chain: prepare relayer done
+[39m
+[32m2025-03-13 06:36:05	[INFO]:	Chainmaker source chain: relayer started...[39m
+[34m2025-03-13 06:36:05	[DEBG]:	11002: start verification protocol: 1[39m
+[34m2025-03-13 06:36:05	[DEBG]:	11002: start verification protocol: 2[39m
+[34m2025-03-13 06:36:05	[DEBG]:	11002: start verification layer watch_q_req_tspt_vrfy thread![39m
+[34m2025-03-13 06:36:05	[DEBG]:	11002: start verification layer watch_q_req_pre_tspt_vrfy thread![39m
+[34m2025-03-13 06:36:05	[DEBG]:	11002: start verification layer watch_q_resp_tspt_vrfy thread![39m
+[34m2025-03-13 06:36:05	[DEBG]:	11002: start verification layer watch_q_resp_pre_tspt_vrfy thread![39m
+[32m2025-03-13 06:36:05	[INFO]:	SPV update: XXX[39m
+[32m2025-03-13 06:36:05	[INFO]:	Notary update: XXX[39m
+[36m2025-03-13 06:36:06	[OK]:	Chainmaker source chain: realyer_verification started successfully[39m
+[34m2025-03-13 06:36:06	[DEBG]:	11002: start transport layer watch thread![39m
+[34m2025-03-13 06:36:06	[DEBG]:	11002: start transport layer gateway server thread![39m
+[34m2025-03-13 06:36:06	[DEBG]:	11002: start transport layer sendReqToTargetRelay thread![39m
+[34m2025-03-13 06:36:06	[DEBG]:	11002: start transport layer sendRespToSourceRelay thread![39m
+[34m2025-03-13 06:36:06	[DEBG]:	11002: start transport layer sendReqToTargetChain thread![39m
+[34m2025-03-13 06:36:06	[DEBG]:	11002: start transport layer sendRespToSourceChain thread![39m
+[34m2025-03-13 06:36:06	[DEBG]:	11002: start transport layer dealReqTxHashes thread![39m
+[34m2025-03-13 06:36:06	[DEBG]:	11002: start transport layer dealRespTxHashes thread![39m
+[36m2025-03-13 06:36:07	[OK]:	Chainmaker source chain: relayer_transport started successfully[39m
+[36m2025-03-13 06:36:07	[OK]:	Chainmaker source chain: relayer started successfully
+[39m
+[32m2025-03-13 06:37:45	[INFO]:	Notary update: XXX[39m
+[32m2025-03-13 06:37:45	[INFO]:	SPV update: XXX[39m
+��成功启动
+[2025-03-13 14:36:09] INFO: 网关进程 PID: 796623
+[2025-03-13 14:36:09] INFO: 监控进程 PID: 796788
+[2025-03-13 14:36:09] INFO: 日志文件: /root/CIPS-Gemini-ChainMaker/logs/chainmaker.log
+[2025-03-13 14:36:09] INFO: 链ID: 14002
+[2025-03-13 14:36:09] INFO: 目标URL: http://192.168.0.2:8089
+[2025-03-13 14:36:23] ERROR: 网关进程已终止！

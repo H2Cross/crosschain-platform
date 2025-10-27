@@ -1,0 +1,50 @@
+{
+  "query_timestamp": "2025-10-27",
+  "blockchain_status": "active",
+  "current_block_height": 94,
+  "latest_block": {
+    "block_hash": "0x00d8359a032c225f86fdb81dffeb4548d6d2b4319a2973ba6ca978fbe6cdffbd",
+    "block_creator": "%!s(uint64=1)",
+    "transaction_count": 0,
+    "timestamp_unix": 1761481488934,
+    "timestamp_readable": "2025-10-26 20",
+    "transactions": []
+  },
+  "recent_blocks": [
+    {
+      "block_number": 90,
+      "transaction_count": 1,
+      "block_hash_short": "0xb57207f763d197d420de44128556c3c219e6d0553fbcfd9a5ab24a25935da7e7"
+    },
+    {
+      "block_number": 91,
+      "transaction_count": 1,
+      "block_hash_short": "0xb5ea57bf9e94cdd310d1fed6b51864c0d0a4cfc99d55a1b2463b47c5380d2698"
+    },
+    {
+      "block_number": 92,
+      "transaction_count": 1,
+      "block_hash_short": "0x02be33146d228343ecb92aa8091d4c6492aed95c1b3e2708f0607d3a9dd25a15"
+    },
+    {
+      "block_number": 93,
+      "transaction_count": 1,
+      "block_hash_short": "0x8716ca61301131de67c17baa3c3f22082b51e88d89fead74b610583bc259e890"
+    },
+    {
+      "block_number": 94,
+      "transaction_count": 1,
+      "block_hash_short": "0x00d8359a032c225f86fdb81dffeb4548d6d2b4319a2973ba6ca978fbe6cdffbd"
+    }
+  ],
+  "transaction_statistics": {
+    "total_transactions": 94,
+    "failed_transactions": 8,
+    "success_rate": "91.49%"
+  },
+  "network_info": {
+    "chain_type": "FISCO BCOS",
+    "node_count": 4,
+    "connection_status": "connected"
+  }
+}
