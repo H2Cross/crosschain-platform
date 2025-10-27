@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -61,15 +62,16 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
         try {
             // 使用QueryWrapper构建查询条件
             QueryWrapper<Crosschain> wrapper = new QueryWrapper<>();
-            
+
             // 如果提供了txId且不为空，则根据txId查询
             if (txId != null) {
                 wrapper.eq("tx_id", txId);
             }
-            
+
             // 执行查询
             List<Crosschain> crosschainList = crosschainMapper.selectList(wrapper);
             System.out.println(crosschainList);
+            Collections.reverse(crosschainList);
 
             // 构建响应数据
             JSONArray resultArray = new JSONArray();
@@ -89,7 +91,6 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                 resultObj.put("responseHash", crosschain.getResponseHash());
                 resultArray.add(resultObj);
             }
-
             // 设置响应数据
             JSONObject responseData = new JSONObject();
             responseData.put("crossTransactions", resultArray);
@@ -135,13 +136,15 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
             // 构建响应数据
             JSONObject resultObj = new JSONObject();
             resultObj.put("txId", crosschain.getTxId());
+            resultObj.put("srcChainType", crosschain.getSrcChainType());
+            resultObj.put("dstChainType", crosschain.getDstChainType());
             resultObj.put("srcIp", crosschain.getSrcIp());
             resultObj.put("srcPort", crosschain.getSrcPort());
             resultObj.put("dstIp", crosschain.getDstIp());
             resultObj.put("dstPort", crosschain.getDstPort());
             resultObj.put("srcHash", crosschain.getSrcHash());
             resultObj.put("dstHash", crosschain.getDstHash());
-            resultObj.put("response_hash", crosschain.getResponseHash());
+            resultObj.put("responseHash", crosschain.getResponseHash());
             resultObj.put("txTime", crosschain.getTxTime());
 
             // 设置响应数据
@@ -405,7 +408,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
 
     @Override
     public CommonResp startGateways(String srcIp, String srcChainType, String dstIp, String dstChainType,
-            String relayIp) {
+                                    String relayIp) {
         CommonResp response = new CommonResp();
         JSONObject resultObj = new JSONObject();
 
@@ -451,7 +454,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
      * 启动源链网关
      */
     private void startSourceChain(String srcIp, String srcChainType, String dstIp, int dstPort,
-            String dstChainType, JSONObject resultObj) throws Exception {
+                                  String dstChainType, JSONObject resultObj) throws Exception {
         SSHConfig.connect(srcIp); // 使用默认的用户名和密码
 
         switch (srcChainType.toLowerCase()) {
@@ -486,6 +489,31 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                 resultObj.put("h2chainStartLog_" + srcIp, h2cResult);
                 break;
 
+            case "fabric":
+                // for test
+                String fabricCmd = String.format(
+                        "source /etc/profile && source ~/.bashrc && cd /root/shell && nohup /root/shell/fabric_start.sh %d > fabric.log 2>&1 &",
+                        getChainId(dstChainType, dstIp));
+                // String h2cCmd = String.format("source /etc/profile && source ~/.bashrc && cd
+                // /root/shell && nohup /root/shell/h2chain_start.sh %d > h2chain.log 2>&1 &",
+                // getChainId(dstChainType, dstIp));
+                String fabricResult = SSHConfig.executeCMD(fabricCmd, "UTF-8");
+                resultObj.put("fabricStartResult_" + srcIp, "fabric链网关启动成功");
+                resultObj.put("fabricStartLog_" + srcIp, fabricResult);
+                break;
+            case "fisco":
+                // for test
+                String fiscoCmd = String.format(
+                        "source /etc/profile && source ~/.bashrc && cd /root/shell && nohup /root/shell/fisco_start.sh %d > fisco.log 2>&1 &",
+                        getChainId(dstChainType, dstIp));
+                // String h2cCmd = String.format("source /etc/profile && source ~/.bashrc && cd
+                // /root/shell && nohup /root/shell/h2chain_start.sh %d > h2chain.log 2>&1 &",
+                // getChainId(dstChainType, dstIp));
+                String fiscoResult = SSHConfig.executeCMD(fiscoCmd, "UTF-8");
+                resultObj.put("fiscoStartResult_" + srcIp, "fisco链网关启动成功");
+                resultObj.put("fiscoStartLog_" + srcIp, fiscoResult);
+                break;
+
             case "bubi":
                 String bubiCmd = String.format(
                         "source /etc/profile && source ~/.bashrc && cd /root/shell && nohup /root/shell/bubi_start.sh %s %s %s %d source > bubi.log 2>&1 &",
@@ -505,7 +533,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
      * 启动目标链网关
      */
     private void startDestinationChain(String dstIp, String dstChainType, String srcIp, int srcPort,
-            String srcChainType, JSONObject resultObj) throws Exception {
+                                       String srcChainType, JSONObject resultObj) throws Exception {
         SSHConfig.connect(dstIp); // 使用默认的用户名和密码
 
         switch (dstChainType.toLowerCase()) {
@@ -521,7 +549,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                 // todo: for local test
                 String cmCmd = String.format(
                         "source /etc/profile && source ~/.bashrc && cd /root/shell && nohup /root/shell/chainmaker_start1.sh %s %s %d > chainmaker.log 2>&1 &",
-                        getChainId(srcChainType, srcIp), srcIp, srcPort(dstChainType));
+                        getChainId(srcChainType, srcIp), srcIp, srcPort(srcChainType));
                 String cmResult = SSHConfig.executeCMD(cmCmd, "UTF-8");
                 resultObj.put("chainmakerStartResult_" + dstIp, "长安链网关启动成功");
                 resultObj.put("chainmakerStartLog_" + dstIp, cmResult);
@@ -538,6 +566,31 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                 String h2cResult = SSHConfig.executeCMD(h2cCmd, "UTF-8");
                 resultObj.put("h2chainStartResult_" + dstIp, "海河链网关启动成功");
                 resultObj.put("h2chainStartLog_" + dstIp, h2cResult);
+                break;
+
+            case "fabric":
+                // String h2cCmd = String.format("source /etc/profile && source ~/.bashrc && cd
+                // /root/shell && nohup /root/shell/h2chain_start.sh %d > h2chain.log 2>&1 &",
+                // getChainId(srcChainType, srcIp));
+                // for test
+                String fabricCmd = String.format(
+                        "source /etc/profile && source ~/.bashrc && cd /root/shell && nohup /root/shell/fabric_start.sh %d > fabric.log 2>&1 &",
+                        getChainId(dstChainType, dstIp));
+                String fabricResult = SSHConfig.executeCMD(fabricCmd, "UTF-8");
+                resultObj.put("fabricStartResult_" + dstIp, "fabric链网关启动成功");
+                resultObj.put("fabricStartLog_" + dstIp, fabricResult);
+                break;
+            case "fisco":
+                // String h2cCmd = String.format("source /etc/profile && source ~/.bashrc && cd
+                // /root/shell && nohup /root/shell/h2chain_start.sh %d > h2chain.log 2>&1 &",
+                // getChainId(srcChainType, srcIp));
+                // for test
+                String fiscoCmd = String.format(
+                        "source /etc/profile && source ~/.bashrc && cd /root/shell && nohup /root/shell/fisco_start.sh %d > fisco.log 2>&1 &",
+                        getChainId(dstChainType, dstIp));
+                String fiscoResult = SSHConfig.executeCMD(fiscoCmd, "UTF-8");
+                resultObj.put("fiscoStartResult_" + dstIp, "fisco链网关启动成功");
+                resultObj.put("fiscoStartLog_" + dstIp, fiscoResult);
                 break;
 
             case "bubi":
@@ -572,6 +625,10 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                 return 8087;
             case "bubi":
                 return 8089;
+            case "fabric":
+                return 8090;
+            case "fisco":
+                return 8091;
             default:
                 throw new IllegalArgumentException("不支持的链类型: " + chainType);
         }
@@ -602,6 +659,10 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                 return 13000 + lastNumber;
             case "bubi":
                 return 14000 + lastNumber;
+            case "fabric":
+                return 15000 + lastNumber;
+            case "fisco":
+                return 16000 + lastNumber;
             default:
                 throw new IllegalArgumentException("不支持的链类型: " + chainType);
         }
@@ -609,7 +670,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
 
     /**
      * 执行跨链操作
-     * 
+     *
      * @param srcIp        源链IP
      * @param srcChainType 源链类型
      * @param dstIp        目标链IP
@@ -617,46 +678,52 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
      * @return 跨链操作结果
      */
     @Override
-    public CommonResp executeCrossChain(String srcIp, String srcChainType, String dstIp, String dstChainType,String srcappId,String dstappId,String appArgs) {
+    public CommonResp executeCrossChain(String srcIp, String srcChainType, String dstIp, String dstChainType,
+                                        String srcappId, String dstappId, String appArgs) {
         CommonResp response = new CommonResp();
         JSONObject resultObj = new JSONObject();
-        if(srcappId==null || srcappId.isEmpty()){
-            srcappId="";
+        if (srcappId == null || srcappId.isEmpty()) {
+            srcappId = "";
         }
-        if(dstappId==null || dstappId.isEmpty()){
-            dstappId="";
+        if (dstappId == null || dstappId.isEmpty()) {
+            dstappId = "";
         }
-        if(appArgs==null || appArgs.isEmpty()){
-            appArgs="";
+        if (appArgs == null || appArgs.isEmpty()) {
+            appArgs = "";
         }
 
         try {
             SSHConfig.connect(srcIp);
 
             // 根据链类型执行不同的跨链命令
+
+            // 计算源链和目标链的chainId
+            String getIpCmd = "ip -4 addr show eth0 | grep -oP '(?<=inet\\s)\\d+\\.\\d+\\.\\d+\\.\\d+' | cut -d. -f4";
+            String ipLastPart = SSHConfig.executeCMD(getIpCmd, "UTF-8").trim();
+            int srcChainId = 12000 + Integer.parseInt(ipLastPart);
+
+            // 目标链ID计算
+            String[] dstIpParts = dstIp.split("\\.");
+            int dstChainId = 12000;
+            if (dstChainType.equalsIgnoreCase("ethereum")) {
+                dstChainId = 12000 + Integer.parseInt(dstIpParts[3]);
+            } else if (dstChainType.equalsIgnoreCase("chainmaker")) {
+                dstChainId = 11000 + Integer.parseInt(dstIpParts[3]);
+            } else if (dstChainType.equalsIgnoreCase("h2chain")) {
+                dstChainId = 13000 + Integer.parseInt(dstIpParts[3]);
+            } else if (dstChainType.equalsIgnoreCase("bubi")) {
+                dstChainId = 14000 + Integer.parseInt(dstIpParts[3]);
+            } else if (dstChainType.equalsIgnoreCase("fabric")) {
+                dstChainId = 15000 + Integer.parseInt(dstIpParts[3]);
+            } else if (dstChainType.equalsIgnoreCase("fisco")) {
+                dstChainId = 16000 + Integer.parseInt(dstIpParts[3]);
+            }
             switch (srcChainType.toLowerCase()) {
                 case "ethereum":
-                    // 计算源链和目标链的chainId
-                    String getIpCmd = "ip -4 addr show eth0 | grep -oP '(?<=inet\\s)\\d+\\.\\d+\\.\\d+\\.\\d+' | cut -d. -f4";
-                    String ipLastPart = SSHConfig.executeCMD(getIpCmd, "UTF-8").trim();
-                    int srcChainId = 12000 + Integer.parseInt(ipLastPart);
-
-                    // 目标链ID计算
-                    String[] dstIpParts = dstIp.split("\\.");
-                    int dstChainId = 12000;
-                    if (dstChainType.equalsIgnoreCase("ethereum")) {
-                        dstChainId = 12000 + Integer.parseInt(dstIpParts[3]);
-                    } else if (dstChainType.equalsIgnoreCase("chainmaker")) {
-                        dstChainId = 11000 + Integer.parseInt(dstIpParts[3]);
-                    } else if (dstChainType.equalsIgnoreCase("h2chain")) {
-                        dstChainId = 13000 + Integer.parseInt(dstIpParts[3]);
-                    } else if (dstChainType.equalsIgnoreCase("bubi")) {
-                        dstChainId = 14000 + Integer.parseInt(dstIpParts[3]);
-                    }
-
                     // 执行以太坊跨链命令
                     String ethCmd = String.format(
-                            "source /etc/profile && source ~/.bashrc && cd ~/CIPS-Gemini-v1/CIPS-Gemini-Ethereum && ./helper.sh SendCCMsg ws://127.0.0.1:10026 contract_addresses_%d.toml %d "+srcappId+" "+dstappId+" "+appArgs,
+                            "source /etc/profile && source ~/.bashrc && cd ~/CIPS-Gemini-v1/CIPS-Gemini-Ethereum && ./helper.sh SendCCMsg ws://127.0.0.1:10026 contract_addresses_%d.toml %d "
+                                    + srcappId + " " + dstappId + " " + appArgs,
                             srcChainId, getChainId(dstChainType, dstIp));
                     String ethResult = SSHConfig.executeCMD(ethCmd, "UTF-8");
 
@@ -726,6 +793,60 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                         resultObj.put("srcReqHash", ethReqHash);
                         resultObj.put("crossChainResult", "以太坊跨海河链操作执行成功");
 
+                    } else if (dstChainType.equalsIgnoreCase("fabric")) {
+                        // 读取海河链日志文件
+                        String fabricFromEthLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-Fabric/logs/fabric.log";
+                        String fabricFromEthLogs = SSHConfig.executeCMD(fabricFromEthLogCmd, "UTF-8");
+
+                        // 提取源链响应哈希
+                        String ethRespPattern = "get resp txhash: (0x[a-fA-F0-9]+)";
+                        Pattern ethRespRegex = Pattern.compile(ethRespPattern);
+                        Matcher ethRespMatcher = ethRespRegex.matcher(ethFromCmLogs);
+                        String ethRespHash = "";
+                        while (ethRespMatcher.find()) {
+                            ethRespHash = ethRespMatcher.group(1);
+                        }
+
+                        // 提取目标链哈希
+                        String ethTofabricDstPattern = "get req txhash: ([a-fA-F0-9]+)";
+                        Pattern ethTofabricDstRegex = Pattern.compile(ethTofabricDstPattern);
+                        Matcher ethTofabricDstMatcher = ethTofabricDstRegex.matcher(fabricFromEthLogs);
+                        String ethTofabricDstHash = "";
+                        while (ethTofabricDstMatcher.find()) {
+                            ethTofabricDstHash = ethTofabricDstMatcher.group(1);
+                        }
+
+                        resultObj.put("dstHash", ethTofabricDstHash);
+                        resultObj.put("srcRespHash", ethRespHash);
+                        resultObj.put("srcReqHash", ethReqHash);
+                        resultObj.put("crossChainResult", "以太坊跨fabric操作执行成功");
+                    } else if (dstChainType.equalsIgnoreCase("fisco")) {
+                        // 读取海河链日志文件
+                        String fiscoFromEthLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-Fisco/logs/fisco.log";
+                        String fiscoFromEthLogs = SSHConfig.executeCMD(fiscoFromEthLogCmd, "UTF-8");
+
+                        // 提取源链响应哈希
+                        String ethRespPattern = "get resp txhash: (0x[a-fA-F0-9]+)";
+                        Pattern ethRespRegex = Pattern.compile(ethRespPattern);
+                        Matcher ethRespMatcher = ethRespRegex.matcher(ethFromCmLogs);
+                        String ethRespHash = "";
+                        while (ethRespMatcher.find()) {
+                            ethRespHash = ethRespMatcher.group(1);
+                        }
+
+                        // 提取目标链哈希
+                        String ethTofiscoDstPattern = "get req txhash: ([a-fA-F0-9]+)";
+                        Pattern ethTofiscoDstRegex = Pattern.compile(ethTofiscoDstPattern);
+                        Matcher ethTofiscoDstMatcher = ethTofiscoDstRegex.matcher(fiscoFromEthLogs);
+                        String ethTofiscoDstHash = "";
+                        while (ethTofiscoDstMatcher.find()) {
+                            ethTofiscoDstHash = ethTofiscoDstMatcher.group(1);
+                        }
+
+                        resultObj.put("dstHash", ethTofiscoDstHash);
+                        resultObj.put("srcRespHash", ethRespHash);
+                        resultObj.put("srcReqHash", ethReqHash);
+                        resultObj.put("crossChainResult", "以太坊跨fisco操作执行成功");
                     } else if (dstChainType.equalsIgnoreCase("chainmaker")) {
                         // 读取长安链日志文件
                         String cmFromEthLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-ChainMaker/logs/chainmaker.log";
@@ -800,7 +921,8 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
 
                 case "h2chain":
                     // 执行海河链跨链命令
-                    String h2cCmd = "source /etc/profile && source ~/.bashrc && cd /root/CIPS-Gemini-v1/CIPS-Gemini-H2Chain && "+"./crossH2C test "+srcappId+" "+dstappId+" "+appArgs;
+                    String h2cCmd = "source /etc/profile && source ~/.bashrc && cd /root/CIPS-Gemini-v1/CIPS-Gemini-H2Chain && "
+                            + "./crossH2C test " + srcappId + " " + dstappId + " " + appArgs;
                     String h2cResult = SSHConfig.executeCMD(h2cCmd, "UTF-8");
 
                     // 等待35秒，确保日志已经生成
@@ -872,7 +994,37 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                         resultObj.put("srcRespHash", srcRespHash);
                         resultObj.put("srcReqHash", srcReqHash);
                         resultObj.put("crossChainResult", "海河链跨长安链操作执行成功");
-                    } else if (dstChainType.equalsIgnoreCase("bubi")) {
+                    }else if(dstChainType.equalsIgnoreCase("fabric")) {
+                        // 读取以太坊日志文件
+                        String fabricLogCmdH2c = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-Fabric/logs/fabric.log";
+                        String fabricLogsH2c = SSHConfig.executeCMD(fabricLogCmdH2c, "UTF-8");
+
+                        // 提取源链请求哈希
+                        String h2cReqPattern = "Obtained request cmhash on the source chain\\(chainid: [0-9]+, cmhash: ([a-fA-F0-9]+)\\)";
+                        Pattern h2cReqRegex = Pattern.compile(h2cReqPattern);
+                        Matcher h2cReqMatcher = h2cReqRegex.matcher(h2cSrcLogs);
+                        srcReqHash = h2cReqMatcher.find() ? h2cReqMatcher.group(1) : "";
+
+                        // 提取源链响应哈希
+                        String h2cRespPattern = "\\[DEBG\\]:\\s+get resp txhash: ([a-fA-F0-9]+)";
+                        Pattern h2cRespRegex = Pattern.compile(h2cRespPattern);
+                        Matcher h2cRespMatcher = h2cRespRegex.matcher(h2cSrcLogs);
+                        srcRespHash = h2cRespMatcher.find() ? h2cRespMatcher.group(1) : "";
+
+                        // 提取目标链哈希
+                        String h2cDstPattern = "get req txhash: (0x[a-fA-F0-9]+)";
+                        Pattern h2cDstRegex = Pattern.compile(h2cDstPattern);
+                        Matcher h2cDstMatcher = h2cDstRegex.matcher(fabricLogsH2c);
+                        dstHash = h2cDstMatcher.find() ? h2cDstMatcher.group(1) : "";
+
+                        resultObj.put("dstHash", dstHash);
+                        resultObj.put("srcRespHash", srcRespHash);
+                        resultObj.put("srcReqHash", srcReqHash);
+                        resultObj.put("crossChainResult", "海河链跨fabric操作执行成功");
+
+
+                    }
+                    else if (dstChainType.equalsIgnoreCase("bubi")) {
                         // 读取布比链日志文件
                         String bubiLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-Bubi/logs/bubi.log";
                         String bubiLogs = SSHConfig.executeCMD(bubiLogCmd, "UTF-8");
@@ -904,10 +1056,317 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                         resultObj.put("crossChainResult", "海河链跨布比链操作执行成功");
                     }
                     break;
+                case "fisco":
+                    // 执行fisco跨链命令
+                    String appArgsfisco = appArgs.replaceAll("\"", "\\\\\""); // 转义双引号
+                    String fiscoCmd = "source /etc/profile && source ~/.bashrc && cd /root/CIPS-Gemini-v1/CIPS-Gemini-Fisco && "
+                            + "./crossFab test " + dstChainId + " " + srcappId + " " + dstappId + " " + appArgsfisco;
+                    String fiscoResult = SSHConfig.executeCMD(fiscoCmd, "UTF-8");
 
+                    // 等待35秒，确保日志已经生成
+                    Thread.sleep(35000);
+
+                    // 读取fisco日志文件
+                    String fiscoSrcLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-Fisco/logs/fisco.log";
+                    String fiscoSrcLogs = SSHConfig.executeCMD(fiscoSrcLogCmd, "UTF-8");
+
+                    // 连接目标链服务器
+                    SSHConfig.connect(dstIp);
+
+                    srcReqHash = "";
+                    srcRespHash = "";
+                    dstHash = "";
+
+                    if (dstChainType.equalsIgnoreCase("ethereum")) {
+                        // 读取以太坊日志文件
+                        String ethLogCmdfisco = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-Ethereum/logs/eth.log";
+                        String ethLogsfisco = SSHConfig.executeCMD(ethLogCmdfisco, "UTF-8");
+
+                        // 提取源链请求哈希
+                        String fiscoReqPattern = "Obtained request cmhash on the source chain\\(chainid: [0-9]+, cmhash: ([a-fA-F0-9]+)\\)";
+                        Pattern fiscoReqRegex = Pattern.compile(fiscoReqPattern);
+                        Matcher fiscoReqMatcher = fiscoReqRegex.matcher(fiscoSrcLogs);
+                        srcReqHash = fiscoReqMatcher.find() ? fiscoReqMatcher.group(1) : "";
+
+                        // 提取源链响应哈希
+                        String fiscoRespPattern = "\\[DEBG\\]:\\s+get resp txhash: ([a-fA-F0-9]+)";
+                        Pattern fiscoRespRegex = Pattern.compile(fiscoRespPattern);
+                        Matcher fiscoRespMatcher = fiscoRespRegex.matcher(fiscoSrcLogs);
+                        srcRespHash = fiscoRespMatcher.find() ? fiscoRespMatcher.group(1) : "";
+
+                        // 提取目标链哈希
+                        String fiscoDstPattern = "get req txhash: (0x[a-fA-F0-9]+)";
+                        Pattern fiscoDstRegex = Pattern.compile(fiscoDstPattern);
+                        Matcher fiscoDstMatcher = fiscoDstRegex.matcher(ethLogsfisco);
+                        dstHash = fiscoDstMatcher.find() ? fiscoDstMatcher.group(1) : "";
+
+                        resultObj.put("dstHash", dstHash);
+                        resultObj.put("srcRespHash", srcRespHash);
+                        resultObj.put("srcReqHash", srcReqHash);
+                        resultObj.put("crossChainResult", "fisco跨以太坊操作执行成功");
+
+                    } else if (dstChainType.equalsIgnoreCase("chainmaker")) {
+                        // 读取长安链日志文件
+                        String cmFromfiscoLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-ChainMaker/logs/chainmaker.log";
+                        String cmFromfiscoLogs = SSHConfig.executeCMD(cmFromfiscoLogCmd, "UTF-8");
+
+                        // 提取源链请求哈希
+                        String fiscoReqPattern = "Obtained request cmhash on the source chain\\(chainid: [0-9]+, cmhash: ([a-fA-F0-9]+)\\)";
+                        Pattern fiscoReqRegex = Pattern.compile(fiscoReqPattern);
+                        Matcher fiscoReqMatcher = fiscoReqRegex.matcher(fiscoSrcLogs);
+                        srcReqHash = fiscoReqMatcher.find() ? fiscoReqMatcher.group(1) : "";
+
+                        // 提取源链响应哈希
+                        String fiscoRespPattern = "\\[DEBG\\]:\\s+get resp txhash: ([a-fA-F0-9]+)";
+                        Pattern fiscoRespRegex = Pattern.compile(fiscoRespPattern);
+                        Matcher fiscoRespMatcher = fiscoRespRegex.matcher(fiscoSrcLogs);
+                        srcRespHash = fiscoRespMatcher.find() ? fiscoRespMatcher.group(1) : "";
+
+                        // 提取目标链哈希
+                        String fiscoDstPattern = "get req txhash: (0x[a-fA-F0-9]+)";
+                        Pattern fiscoDstRegex = Pattern.compile(fiscoDstPattern);
+                        Matcher fiscoDstMatcher = fiscoDstRegex.matcher(cmFromfiscoLogs);
+                        dstHash = fiscoDstMatcher.find() ? fiscoDstMatcher.group(1) : "";
+
+                        resultObj.put("dstHash", dstHash);
+                        resultObj.put("srcRespHash", srcRespHash);
+                        resultObj.put("srcReqHash", srcReqHash);
+                        resultObj.put("crossChainResult", "fisco跨长安链操作执行成功");
+                    }else if(dstChainType.equalsIgnoreCase("fabric")) {
+                        // 读取fabric日志文件
+                        String fabricLogCmdfisco = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-Fabric/logs/fabric.log";
+                        String fabricLogsfisco = SSHConfig.executeCMD(fabricLogCmdfisco, "UTF-8");
+
+                        // 提取源链请求哈希
+                        String fiscoReqPattern = "Obtained request cmhash on the source chain\\(chainid: [0-9]+, cmhash: ([a-fA-F0-9]+)\\)";
+                        Pattern fiscoReqRegex = Pattern.compile(fiscoReqPattern);
+                        Matcher fiscoReqMatcher = fiscoReqRegex.matcher(fiscoSrcLogs);
+                        srcReqHash = fiscoReqMatcher.find() ? fiscoReqMatcher.group(1) : "";
+
+                        // 提取源链响应哈希
+                        String fiscoRespPattern = "\\[DEBG\\]:\\s+get resp txhash: ([a-fA-F0-9]+)";
+                        Pattern fiscoRespRegex = Pattern.compile(fiscoRespPattern);
+                        Matcher fiscoRespMatcher = fiscoRespRegex.matcher(fiscoSrcLogs);
+                        srcRespHash = fiscoRespMatcher.find() ? fiscoRespMatcher.group(1) : "";
+
+                        // 提取目标链哈希
+                        String fiscoDstPattern = "get req txhash: (0x[a-fA-F0-9]+)";
+                        Pattern fiscoDstRegex = Pattern.compile(fiscoDstPattern);
+                        Matcher fiscoDstMatcher = fiscoDstRegex.matcher(fabricLogsfisco);
+                        dstHash = fiscoDstMatcher.find() ? fiscoDstMatcher.group(1) : "";
+
+                        resultObj.put("dstHash", dstHash);
+                        resultObj.put("srcRespHash", srcRespHash);
+                        resultObj.put("srcReqHash", srcReqHash);
+                        resultObj.put("crossChainResult", "fisco跨fabric操作执行成功");
+
+
+                    }
+                    else if (dstChainType.equalsIgnoreCase("bubi")) {
+                        // 读取布比链日志文件
+                        String bubiLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-Bubi/logs/bubi.log";
+                        String bubiLogs = SSHConfig.executeCMD(bubiLogCmd, "UTF-8");
+
+                        // 提取源链请求哈希（从bubiResult中提取）
+                        String fiscoReqPattern = "Obtained request cmhash on the source chain\\(chainid: [0-9]+, cmhash: ([a-fA-F0-9]+)\\)";
+                        Pattern fiscoReqRegex = Pattern.compile(fiscoReqPattern);
+                        Matcher fiscoReqMatcher = fiscoReqRegex.matcher(fiscoSrcLogs);
+                        srcReqHash = fiscoReqMatcher.find() ? fiscoReqMatcher.group(1) : "";
+
+                        // 提取源链响应哈希
+                        String fiscoRespPattern = "\\[DEBG\\]:\\s+get resp txhash: ([a-fA-F0-9]+)";
+                        Pattern fiscoRespRegex = Pattern.compile(fiscoRespPattern);
+                        Matcher fiscoRespMatcher = fiscoRespRegex.matcher(fiscoSrcLogs);
+                        srcRespHash = fiscoRespMatcher.find() ? fiscoRespMatcher.group(1) : "";
+
+                        // 提取目标链哈希
+                        String fiscoToBubiDstPattern = "contractCallGo succeed,hash=([a-fA-F0-9]+)";
+                        Pattern fiscoToBubiDstRegex = Pattern.compile(fiscoToBubiDstPattern);
+                        Matcher fiscoToBubiDstMatcher = fiscoToBubiDstRegex.matcher(bubiLogs);
+                        String fiscoToBubiDstHash = "";
+                        while (fiscoToBubiDstMatcher.find()) {
+                            fiscoToBubiDstHash = fiscoToBubiDstMatcher.group(1);
+                        }
+
+                        resultObj.put("dstHash", fiscoToBubiDstHash);
+                        resultObj.put("srcRespHash", srcRespHash);
+                        resultObj.put("srcReqHash", srcReqHash);
+                        resultObj.put("crossChainResult", "fisco跨布比链操作执行成功");
+                    }
+                    break;
+                case "fabric":
+                    // 执行fabric链跨链命令
+                    String appArgsFabric = appArgs.replaceAll("\"", "\\\\\""); // 转义双引号
+                    String fabricCmd = "source /etc/profile && source ~/.bashrc && cd /root/CIPS-Gemini-v1/CIPS-Gemini-Fabric && "
+                            + "./crossFab test " + dstChainId + " " + srcappId + " " + dstappId + " " + appArgsFabric;
+                    String fabricResult = SSHConfig.executeCMD(fabricCmd, "UTF-8");
+
+                    // 等待35秒，确保日志已经生成
+                    Thread.sleep(35000);
+
+                    // 读取海河链日志文件
+                    String fabricSrcLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-Fabric/logs/fabric.log";
+                    String fabricSrcLogs = SSHConfig.executeCMD(fabricSrcLogCmd, "UTF-8");
+
+                    // 连接目标链服务器
+                    SSHConfig.connect(dstIp);
+
+                    srcReqHash = "";
+                    srcRespHash = "";
+                    dstHash = "";
+                    // 读取以太坊日志文件
+                    if (dstChainType.equalsIgnoreCase("ethereum")) {
+                        // 读取以太坊日志文件
+                        String fabrictoethLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-Ethereum/logs/eth.log";
+                        String fabrictoethlog = SSHConfig.executeCMD(fabrictoethLogCmd, "UTF-8");
+
+                        // 提取源链请求哈希
+                        String fabricReqPattern = "Obtained request cmhash on the source chain\\(chainid: [0-9]+, cmhash: ([a-fA-F0-9]+)\\)";
+                        Pattern fabricReqRegex = Pattern.compile(fabricReqPattern);
+                        Matcher fabricReqMatcher = fabricReqRegex.matcher(fabricSrcLogs);
+                        srcReqHash = fabricReqMatcher.find() ? fabricReqMatcher.group(1) : "";
+
+                        // 提取源链响应哈希
+                        String fabricRespPattern = "\\[DEBG\\]:\\s+get resp txhash: ([a-fA-F0-9]+)";
+                        Pattern fabricRespRegex = Pattern.compile(fabricRespPattern);
+                        Matcher fabricRespMatcher = fabricRespRegex.matcher(fabricSrcLogs);
+                        srcRespHash = fabricRespMatcher.find() ? fabricRespMatcher.group(1) : "";
+
+                        // 提取目标链哈希
+                        String fabrictoethDstPattern = "get req txhash: (0x[a-fA-F0-9]+)";
+                        Pattern fabrictoethDstRegex = Pattern.compile(fabrictoethDstPattern);
+                        Matcher fabrictoethDstMatcher = fabrictoethDstRegex.matcher(fabrictoethlog);
+                        dstHash = fabrictoethDstMatcher.find() ? fabrictoethDstMatcher.group(1) : "";
+
+                        resultObj.put("dstHash", dstHash);
+                        resultObj.put("srcRespHash", srcRespHash);
+                        resultObj.put("srcReqHash", srcReqHash);
+                        resultObj.put("crossChainResult", "fabric链跨以太坊操作执行成功");
+
+                    } else if (dstChainType.equalsIgnoreCase("chainmaker")) {
+                        // 读取以太坊日志文件
+                        String fabrictochainmakerLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-ChainMaker/logs/chainmaker.log";
+                        String fabrictochainmakerlog = SSHConfig.executeCMD(fabrictochainmakerLogCmd, "UTF-8");
+
+                        // 提取源链请求哈希
+                        String fabricReqPattern = "Obtained request cmhash on the source chain\\(chainid: [0-9]+, cmhash: ([a-fA-F0-9]+)\\)";
+                        Pattern fabricReqRegex = Pattern.compile(fabricReqPattern);
+                        Matcher fabricReqMatcher = fabricReqRegex.matcher(fabricSrcLogs);
+                        srcReqHash = fabricReqMatcher.find() ? fabricReqMatcher.group(1) : "";
+
+                        // 提取源链响应哈希
+                        String fabricRespPattern = "\\[DEBG\\]:\\s+get resp txhash: ([a-fA-F0-9]+)";
+                        Pattern fabricRespRegex = Pattern.compile(fabricRespPattern);
+                        Matcher fabricRespMatcher = fabricRespRegex.matcher(fabricSrcLogs);
+                        srcRespHash = fabricRespMatcher.find() ? fabricRespMatcher.group(1) : "";
+
+                        // 提取目标链哈希
+                        String fabrictoh2cDstPattern = "get req txhash: ([a-fA-F0-9]+)";
+                        Pattern fabrictoh2cDstRegex = Pattern.compile(fabrictoh2cDstPattern);
+                        Matcher fabrictoh2cDstMatcher = fabrictoh2cDstRegex.matcher(fabrictochainmakerlog);
+                        dstHash = fabrictoh2cDstMatcher.find() ? fabrictoh2cDstMatcher.group(1) : "";
+
+                        resultObj.put("dstHash", dstHash);
+                        resultObj.put("srcRespHash", srcRespHash);
+                        resultObj.put("srcReqHash", srcReqHash);
+                        resultObj.put("crossChainResult", "fabric链跨长安链操作执行成功");
+
+                    } else if (dstChainType.equalsIgnoreCase("h2chain")) {
+                        // 读取以太坊日志文件
+                        String fabrictoh2cLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-H2chain/logs/h2chain.log";
+                        String fabrictoh2clog = SSHConfig.executeCMD(fabrictoh2cLogCmd, "UTF-8");
+
+                        // 提取源链请求哈希
+                        String fabricReqPattern = "Obtained request cmhash on the source chain\\(chainid: [0-9]+, cmhash: ([a-fA-F0-9]+)\\)";
+                        Pattern fabricReqRegex = Pattern.compile(fabricReqPattern);
+                        Matcher fabricReqMatcher = fabricReqRegex.matcher(fabricSrcLogs);
+                        srcReqHash = fabricReqMatcher.find() ? fabricReqMatcher.group(1) : "";
+
+                        // 提取源链响应哈希
+                        String fabricRespPattern = "\\[DEBG\\]:\\s+get resp txhash: ([a-fA-F0-9]+)";
+                        Pattern fabricRespRegex = Pattern.compile(fabricRespPattern);
+                        Matcher fabricRespMatcher = fabricRespRegex.matcher(fabricSrcLogs);
+                        srcRespHash = fabricRespMatcher.find() ? fabricRespMatcher.group(1) : "";
+
+                        // 提取目标链哈希
+                        String fabrictoh2cDstPattern = "get req txhash: (0x[a-fA-F0-9]+)";
+                        Pattern fabrictoh2cDstRegex = Pattern.compile(fabrictoh2cDstPattern);
+                        Matcher fabrictoh2cDstMatcher = fabrictoh2cDstRegex.matcher(fabrictoh2clog);
+                        dstHash = fabrictoh2cDstMatcher.find() ? fabrictoh2cDstMatcher.group(1) : "";
+
+                        resultObj.put("dstHash", dstHash);
+                        resultObj.put("srcRespHash", srcRespHash);
+                        resultObj.put("srcReqHash", srcReqHash);
+                        resultObj.put("crossChainResult", "fabric链跨海河链操作执行成功");
+
+                    }else if (dstChainType.equalsIgnoreCase("fisco")) {
+                        // 读取fisco日志文件
+                        String fabrictofiscoLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-Fisco/logs/fisco.log";
+                        String fabrictofiscolog = SSHConfig.executeCMD(fabrictofiscoLogCmd, "UTF-8");
+
+                        // 提取源链请求哈希
+                        String fabricReqPattern = "Obtained request cmhash on the source chain\\(chainid: [0-9]+, cmhash: ([a-fA-F0-9]+)\\)";
+                        Pattern fabricReqRegex = Pattern.compile(fabricReqPattern);
+                        Matcher fabricReqMatcher = fabricReqRegex.matcher(fabricSrcLogs);
+                        srcReqHash = fabricReqMatcher.find() ? fabricReqMatcher.group(1) : "";
+
+                        // 提取源链响应哈希
+                        String fabricRespPattern = "\\[DEBG\\]:\\s+get resp txhash: ([a-fA-F0-9]+)";
+                        Pattern fabricRespRegex = Pattern.compile(fabricRespPattern);
+                        Matcher fabricRespMatcher = fabricRespRegex.matcher(fabricSrcLogs);
+                        srcRespHash = fabricRespMatcher.find() ? fabricRespMatcher.group(1) : "";
+
+                        // 提取目标链哈希
+                        String fabrictofiscoDstPattern = "get req txhash: (0x[a-fA-F0-9]+)";
+                        Pattern fabrictofiscoDstRegex = Pattern.compile(fabrictofiscoDstPattern);
+                        Matcher fabrictofiscoDstMatcher = fabrictofiscoDstRegex.matcher(fabrictofiscolog);
+                        dstHash = fabrictofiscoDstMatcher.find() ? fabrictofiscoDstMatcher.group(1) : "";
+
+                        resultObj.put("dstHash", dstHash);
+                        resultObj.put("srcRespHash", srcRespHash);
+                        resultObj.put("srcReqHash", srcReqHash);
+                        resultObj.put("crossChainResult", "fabric链跨fisco链操作执行成功");
+
+                    }
+                    else if (dstChainType.equalsIgnoreCase("bubi")) {
+                        // 读取以太坊日志文件
+                        String fabrictobubiLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-Bubi/logs/bubi.log";
+                        String fabrictobubilog = SSHConfig.executeCMD(fabrictobubiLogCmd, "UTF-8");
+
+                        // 提取源链请求哈希
+                        String fabricReqPattern = "Obtained request cmhash on the source chain\\(chainid: [0-9]+, cmhash: ([a-fA-F0-9]+)\\)";
+                        Pattern fabricReqRegex = Pattern.compile(fabricReqPattern);
+                        Matcher fabricReqMatcher = fabricReqRegex.matcher(fabricSrcLogs);
+                        srcReqHash = fabricReqMatcher.find() ? fabricReqMatcher.group(1) : "";
+
+                        // 提取源链响应哈希
+                        String fabricRespPattern = "\\[DEBG\\]:\\s+get resp txhash: ([a-fA-F0-9]+)";
+                        Pattern fabricRespRegex = Pattern.compile(fabricRespPattern);
+                        Matcher fabricRespMatcher = fabricRespRegex.matcher(fabricSrcLogs);
+                        srcRespHash = fabricRespMatcher.find() ? fabricRespMatcher.group(1) : "";
+
+                        // 提取目标链哈希
+                        String fabrictobubiDstPattern = "get req txhash: (0x[a-fA-F0-9]+)";
+                        Pattern fabrictobubiDstRegex = Pattern.compile(fabrictobubiDstPattern);
+                        Matcher fabrictobubiDstMatcher = fabrictobubiDstRegex.matcher(fabrictobubilog);
+                        dstHash = fabrictobubiDstMatcher.find() ? fabrictobubiDstMatcher.group(1) : "";
+
+                        resultObj.put("dstHash", dstHash);
+                        resultObj.put("srcRespHash", srcRespHash);
+                        resultObj.put("srcReqHash", srcReqHash);
+                        resultObj.put("crossChainResult", "fabric链跨bubi链操作执行成功");
+
+                    }
+                    // resultObj.put("dstHash", dstHash);
+                    // resultObj.put("srcRespHash", srcRespHash);
+                    // resultObj.put("srcReqHash", srcReqHash);
+                    // resultObj.put("crossChainResult", "fabric链跨链操作执行成功");
+                    break;
                 case "chainmaker":
                     // 执行长安链跨链命令
-                    String cmCmd = "source /etc/profile && source ~/.bashrc && cd /root/CIPS-Gemini-v1/CIPS-Gemini-ChainMaker && go run main.go send 1 "+appArgs;
+                    String chainmakerAppArgs = appArgs.replaceAll("\",", "\", "); // 处理参数中的逗号分隔
+                    String cmCmd = "source /etc/profile && source ~/.bashrc && cd /root/CIPS-Gemini-v1/CIPS-Gemini-ChainMaker && go run main.go send 1 "
+                            + chainmakerAppArgs;
                     String cmResult = SSHConfig.executeCMD(cmCmd, "UTF-8");
 
                     // 等待5秒，确保日志已经生成
@@ -972,6 +1431,51 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                         String dstPattern = "Obtained response cmhash on the target chain\\(chainid: [0-9]+, cmhash: ([a-fA-F0-9]+)\\)";
                         Pattern dstRegex = Pattern.compile(dstPattern);
                         Matcher dstMatcher = dstRegex.matcher(h2cLogs);
+                        dstHash = dstMatcher.find() ? dstMatcher.group(1) : "";
+                    }else if (dstChainType.equalsIgnoreCase("fisco")) {
+                        // 读取海河链日志文件
+                        String fiscoLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-Fisco/logs/fisco.log";
+                        String fiscoLogs = SSHConfig.executeCMD(fiscoLogCmd, "UTF-8");
+
+                        // 提取源链请求哈希
+                        String srcReqPattern = "Obtained request cmhash on the source chain\\([0-9]+\\): ([a-fA-F0-9]+)";
+                        Pattern srcReqRegex = Pattern.compile(srcReqPattern);
+                        Matcher srcReqMatcher = srcReqRegex.matcher(cmFromEthLogs);
+                        srcReqHash = srcReqMatcher.find() ? srcReqMatcher.group(1) : "";
+
+                        // 提取源链响应哈希（获取第一个有效匹配）
+                        String srcRespPattern = "get resp txhash: ([a-fA-F0-9]+)";
+                        Pattern srcRespRegex = Pattern.compile(srcRespPattern);
+                        Matcher srcRespMatcher = srcRespRegex.matcher(cmFromEthLogs);
+                        srcRespHash = srcRespMatcher.find() ? srcRespMatcher.group(1) : "";
+
+                        // 提取目标链哈希
+                        String dstPattern = "Obtained response cmhash on the target chain\\(chainid: [0-9]+, cmhash: ([a-fA-F0-9]+)\\)";
+                        Pattern dstRegex = Pattern.compile(dstPattern);
+                        Matcher dstMatcher = dstRegex.matcher(fiscoLogs);
+                        dstHash = dstMatcher.find() ? dstMatcher.group(1) : "";
+                    }
+                    else if (dstChainType.equalsIgnoreCase("fabric")) {
+                        // 读取海河链日志文件
+                        String fabriLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-Fabric/logs/fabric.log";
+                        String fabriLogs = SSHConfig.executeCMD(fabriLogCmd, "UTF-8");
+
+                        // 提取源链请求哈希
+                        String srcReqPattern = "Obtained request cmhash on the source chain\\([0-9]+\\): ([a-fA-F0-9]+)";
+                        Pattern srcReqRegex = Pattern.compile(srcReqPattern);
+                        Matcher srcReqMatcher = srcReqRegex.matcher(cmFromEthLogs);
+                        srcReqHash = srcReqMatcher.find() ? srcReqMatcher.group(1) : "";
+
+                        // 提取源链响应哈希（获取第一个有效匹配）
+                        String srcRespPattern = "get resp txhash: ([a-fA-F0-9]+)";
+                        Pattern srcRespRegex = Pattern.compile(srcRespPattern);
+                        Matcher srcRespMatcher = srcRespRegex.matcher(cmFromEthLogs);
+                        srcRespHash = srcRespMatcher.find() ? srcRespMatcher.group(1) : "";
+
+                        // 提取目标链哈希
+                        String dstPattern = "Obtained response cmhash on the target chain\\(chainid: [0-9]+, cmhash: ([a-fA-F0-9]+)\\)";
+                        Pattern dstRegex = Pattern.compile(dstPattern);
+                        Matcher dstMatcher = dstRegex.matcher(fabriLogs);
                         dstHash = dstMatcher.find() ? dstMatcher.group(1) : "";
                     } else if (dstChainType.equalsIgnoreCase("bubi")) {
                         // 读取布比链日志文件
@@ -1044,7 +1548,8 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                     break;
                 case "bubi":
                     // 执行布比链跨链命令
-                    String bubiCmd = "source /etc/profile && source ~/.bashrc && cd /root/CIPS-Gemini-v1/CIPS-Gemini-Bubi && docker exec crossbubi_container go run main.go send "+srcappId+" "+dstappId+" "+appArgs;
+                    String bubiCmd = "source /etc/profile && source ~/.bashrc && cd /root/CIPS-Gemini-v1/CIPS-Gemini-Bubi && docker exec crossbubi_container go run main.go send "
+                            + srcappId + " " + dstappId + " " + appArgs;
                     String bubiResult = SSHConfig.executeCMD(bubiCmd, "UTF-8");
 
                     // 打印命令输出用于调试
@@ -1189,6 +1694,79 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                         resultObj.put("srcRespHash", bubiRespHash);
                         resultObj.put("dstHash", bubiToH2cDstHash);
                         resultObj.put("crossChainResult", "布比链跨海河链操作执行成功");
+                    }else if (dstChainType.equalsIgnoreCase("fisco")) {
+                        // 读取fisco日志文件
+                        String fiscoLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-Fisco/logs/fisco.log";
+                        String fiscoLogs = SSHConfig.executeCMD(fiscoLogCmd, "UTF-8");
+
+                        // 提取源链请求哈希（从bubiResult中提取）
+                        String bubiReqPattern = "chain: SendMsg succeed @ ([a-fA-F0-9]+)";
+                        Pattern bubiReqRegex = Pattern.compile(bubiReqPattern);
+                        Matcher bubiReqMatcher = bubiReqRegex.matcher(bubiResult);
+                        String bubiReqHash = "";
+                        if (bubiReqMatcher.find()) {
+                            bubiReqHash = bubiReqMatcher.group(1);
+                            System.out.println("成功提取到源链请求哈希: " + bubiReqHash);
+                        } else {
+                            System.out.println("未能匹配到源链请求哈希");
+                            System.out.println("使用的正则表达式: " + bubiReqPattern);
+                            System.out.println("实际输出内容：");
+                            System.out.println(bubiResult);
+                        }
+
+                        // 提取源链响应哈希
+                        String bubiRespPattern = "\\[DEBG\\]:\\s*contractCallGo succeed,hash=([a-fA-F0-9]+)";
+                        Pattern bubiRespRegex = Pattern.compile(bubiRespPattern);
+                        Matcher bubiRespMatcher = bubiRespRegex.matcher(bubiLogs);
+                        String bubiRespHash = bubiRespMatcher.find() ? bubiRespMatcher.group(1) : "";
+
+                        // 提取目标链哈希
+                        String bubiTofiscoDstPattern = "get req txhash: ([a-fA-F0-9]+)";
+                        Pattern bubiTofiscoDstRegex = Pattern.compile(bubiTofiscoDstPattern);
+                        Matcher bubiTofiscoDstMatcher = bubiTofiscoDstRegex.matcher(fiscoLogs);
+                        String bubiTofiscoDstHash = bubiTofiscoDstMatcher.find() ? bubiTofiscoDstMatcher.group(1) : "";
+
+                        resultObj.put("srcReqHash", bubiReqHash);
+                        resultObj.put("srcRespHash", bubiRespHash);
+                        resultObj.put("dstHash", bubiTofiscoDstHash);
+                        resultObj.put("crossChainResult", "布比链跨fisco操作执行成功");
+                    }
+                    else if (dstChainType.equalsIgnoreCase("fabric")) {
+                        // 读取海河链日志文件
+                        String fabricLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-Fabric/logs/fabric.log";
+                        String fabricLogs = SSHConfig.executeCMD(fabricLogCmd, "UTF-8");
+
+                        // 提取源链请求哈希（从bubiResult中提取）
+                        String bubiReqPattern = "chain: SendMsg succeed @ ([a-fA-F0-9]+)";
+                        Pattern bubiReqRegex = Pattern.compile(bubiReqPattern);
+                        Matcher bubiReqMatcher = bubiReqRegex.matcher(bubiResult);
+                        String bubiReqHash = "";
+                        if (bubiReqMatcher.find()) {
+                            bubiReqHash = bubiReqMatcher.group(1);
+                            System.out.println("成功提取到源链请求哈希: " + bubiReqHash);
+                        } else {
+                            System.out.println("未能匹配到源链请求哈希");
+                            System.out.println("使用的正则表达式: " + bubiReqPattern);
+                            System.out.println("实际输出内容：");
+                            System.out.println(bubiResult);
+                        }
+
+                        // 提取源链响应哈希
+                        String bubiRespPattern = "\\[DEBG\\]:\\s*contractCallGo succeed,hash=([a-fA-F0-9]+)";
+                        Pattern bubiRespRegex = Pattern.compile(bubiRespPattern);
+                        Matcher bubiRespMatcher = bubiRespRegex.matcher(bubiLogs);
+                        String bubiRespHash = bubiRespMatcher.find() ? bubiRespMatcher.group(1) : "";
+
+                        // 提取目标链哈希
+                        String bubiToH2cDstPattern = "get req txhash: ([a-fA-F0-9]+)";
+                        Pattern bubiToH2cDstRegex = Pattern.compile(bubiToH2cDstPattern);
+                        Matcher bubiToH2cDstMatcher = bubiToH2cDstRegex.matcher(fabricLogs);
+                        String bubiToH2cDstHash = bubiToH2cDstMatcher.find() ? bubiToH2cDstMatcher.group(1) : "";
+
+                        resultObj.put("srcReqHash", bubiReqHash);
+                        resultObj.put("srcRespHash", bubiRespHash);
+                        resultObj.put("dstHash", bubiToH2cDstHash);
+                        resultObj.put("crossChainResult", "布比链跨fabric操作执行成功");
                     }
                     break;
 
@@ -1220,13 +1798,14 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
      * 执行完整的跨链操作（包括启动网关和执行跨链）
      */
     @Override
-    public CommonResp executeFullCrossChain(String srcIp, String srcChainType, String dstIp, String dstChainType,String relayIp,String srcappId,String dstappId,String appArgs,String token) {
+    public CommonResp executeFullCrossChain(String srcIp, String srcChainType, String dstIp, String dstChainType,
+                                            String relayIp, String srcappId, String dstappId, String appArgs, String token) {
         CommonResp response = new CommonResp();
 
         QueryWrapper<User> wrapper = new QueryWrapper<>();
         wrapper.eq("token", token);
         User user = userMapper.selectOne(wrapper);
-        if (appArgs.contains("Access")){// 如果是带权限控制，就把Access去掉变成普通的调用
+        if (appArgs.contains("Access")) {// 如果是带权限控制，就把Access去掉变成普通的调用
             String[] spl = appArgs.split("Access");
             appArgs = spl[0] + spl[1];
             if (user.getAuthority() == 0) {// 没有权限直接退出
@@ -1234,15 +1813,19 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
             }
         }
 
-        if(srcappId==null || srcappId.isEmpty()){
-            srcappId="";
+        if (srcappId == null || srcappId.isEmpty()) {
+            srcappId = "";
         }
-        if(dstappId==null || dstappId.isEmpty()){
-            dstappId="";
+        if (dstappId == null || dstappId.isEmpty()) {
+            dstappId = "";
         }
-        if(appArgs==null || appArgs.isEmpty()){
-            appArgs="";
+        if (appArgs == null || appArgs.isEmpty()) {
+            appArgs = "";
         }
+
+        // 所有的appid都为1
+        srcappId = "1";
+        dstappId = "1";
 
         try {
             // 第一步：启动网关
@@ -1255,7 +1838,8 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
             Thread.sleep(10000);
 
             // 第二步：执行跨链操作
-            CommonResp crossChainResponse = executeCrossChain(srcIp, srcChainType, dstIp, dstChainType,srcappId,dstappId,appArgs);
+            CommonResp crossChainResponse = executeCrossChain(srcIp, srcChainType, dstIp, dstChainType, srcappId,
+                    dstappId, appArgs);
             if (!ResultCode.SUCCESS.Code.equals(crossChainResponse.getCode())) {
                 return crossChainResponse; // 如果跨链操作失败，直接返回错误
             }
@@ -1275,7 +1859,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
 
     /**
      * 保存跨链交易记录到数据库
-     * 
+     *
      * @param srcIp        源链IP
      * @param srcChainType 源链类型
      * @param dstIp        目标链IP
@@ -1283,7 +1867,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
      * @param resultData   跨链操作结果数据
      */
     private void saveCrossChainRecord(String srcIp, String srcChainType, String dstIp,
-            String dstChainType, Object resultData) {
+                                      String dstChainType, Object resultData) {
         try {
             Crosschain crosschain = new Crosschain();
 
@@ -1338,7 +1922,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
 
     /**
      * 生成唯一的交易哈希
-     * 
+     *
      * @param srcIp        源链IP
      * @param dstIp        目标链IP
      * @param srcChainType 源链类型

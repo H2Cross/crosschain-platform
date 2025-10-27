@@ -40,6 +40,8 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -328,6 +330,37 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
                 e.printStackTrace();
             }
         } else if (portNumber.equals(fabricname)) {
+            // // 测试数据
+            // int blockHeight = 100;
+            // JSONObject heightinfo = new JSONObject();
+            // heightinfo.put("heightinfo", blockHeight);
+            // chainresp.setData(heightinfo);
+
+            String logs = "";
+            try {
+                SSHConfig.connect(ipAddress);
+                logs = SSHConfig.executeCMD(
+                        "cd " + "/root/CIPS-Gemini-v1/CIPS-Gemini-Fabric/fabric-samples/myfile/application-gateway-java"
+                                + " && " + "./gradlew run --args='getHeight'",
+                        "UTF-8");
+            } catch (Exception e) {
+                System.out.println("SSH ERROR");
+            }
+            // 提取块高
+            BigInteger blockHeight = BigInteger.ZERO;
+            try {
+                Pattern pattern = Pattern.compile("提取到的区块高度: (\\d+)");
+                Matcher matcher = pattern.matcher(logs);
+                if (matcher.find()) {
+                    blockHeight = new BigInteger(matcher.group(1));
+                }
+            } catch (Exception e) {
+                System.out.println("From Fabric Failed to extract block height: " + e.getMessage());
+            }
+            JSONObject heightinfo = new JSONObject();
+            heightinfo.put("heightinfo", blockHeight);
+            chainresp.setData(heightinfo);
+
             // try {
             // /* 1. 基础配置 */
             // String cryptoRoot = System.getProperty("user.home")
@@ -372,7 +405,7 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
             // e.printStackTrace();
             // chainresp.setData("Error retrieving Fabric block height: " + e.getMessage());
             // }
-        }
+            }
 
         return chainresp;
     }
@@ -655,6 +688,68 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
         }
 
         else if (portNumber.equals(fabricname)) {
+            // // 测试数据
+            // JSONObject blockInfo = new JSONObject();
+            // blockInfo.put("BlockNumber", blockheightReq.getBlockHEIGHT());
+            // blockInfo.put("BlockHash", "56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b");
+            // blockInfo.put("PreviousHash", "56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363a");
+            // blockInfo.put("TransactionCount", 2); 
+            // queryBlockInfoResp.setRet(ResultCode.SUCCESS);
+            // queryBlockInfoResp.setData(blockInfo);
+            // System.out.println("-------Fabric区块信息查询完毕-------");
+
+            String logs = "";
+            try {
+                SSHConfig.connect(ipAddress);
+                logs = SSHConfig.executeCMD(
+                        "cd " + "/root/CIPS-Gemini-v1/CIPS-Gemini-Fabric/fabric-samples/myfile/application-gateway-java"
+                                + " && " + "./gradlew run --args='getBlock 2'",
+                        "UTF-8");
+            } catch (Exception e) {
+                System.out.println("SSH ERROR");
+            }
+            // 提取区块信息
+            JSONObject blockInfo = new JSONObject();
+            try {
+                // 提取区块高度
+                Pattern blockHeightPattern = Pattern.compile("找到目标区块: (\\d+)");
+                Matcher blockHeightMatcher = blockHeightPattern.matcher(logs);
+                if (blockHeightMatcher.find()) {
+                    blockInfo.put("BlockNumber", Long.parseLong(blockHeightMatcher.group(1)));
+                }
+                
+                // 提取前一个区块哈希
+                Pattern prevHashPattern = Pattern.compile("Previous hash: ([0-9a-f]+)");
+                Matcher prevHashMatcher = prevHashPattern.matcher(logs);
+                if (prevHashMatcher.find()) {
+                    blockInfo.put("PreviousHash", prevHashMatcher.group(1));
+                }
+                
+                // 提取数据哈希
+                Pattern dataHashPattern = Pattern.compile("Data hash: ([0-9a-f]+)");
+                Matcher dataHashMatcher = dataHashPattern.matcher(logs);
+                if (dataHashMatcher.find()) {
+                    blockInfo.put("BlockHash", dataHashMatcher.group(1));
+                }
+                
+                // 提取交易数量
+                Pattern txCountPattern = Pattern.compile("Number of transactions: (\\d+)");
+                Matcher txCountMatcher = txCountPattern.matcher(logs);
+                if (txCountMatcher.find()) {
+                    blockInfo.put("TransactionCount", Integer.parseInt(txCountMatcher.group(1)));
+                }
+                
+                // 设置响应信息
+                queryBlockInfoResp.setRet(ResultCode.SUCCESS);
+                queryBlockInfoResp.setData(blockInfo);
+                System.out.println("-------Fabric区块信息提取完毕-------");
+            } catch (Exception e) {
+                System.out.println("From Fabric Failed to extract block info: " + e.getMessage());
+                queryBlockInfoResp.setRet(ResultCode.FAILURE);
+                queryBlockInfoResp.setMessage("Failed to extract block info");
+            }
+            
+
             // String configPath = "D:\\桌面\\fabric-samples-main\\test-network";
             // String userName = "User1@org1.example.com";
             // String mspId = "Org1MSP";
@@ -920,31 +1015,66 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
                 blocks.add(blockInfo);
             }
         } else if (portNumber.equals(CrosschainInfo.FAB.ChainPort)) {
-            if (!BlockchainConfig.do_update_blockchain) {
-                for (int i = 1000; i < 1000 + topN; i++) {
+            String logs = "";
+            try {
+                SSHConfig.connect(ipAddress);
+                logs = SSHConfig.executeCMD(
+                        "cd " + "/root/CIPS-Gemini-v1/CIPS-Gemini-Fabric/fabric-samples/myfile/application-gateway-java"
+                                + " && " + "./gradlew run --args='getTopNBlocks " + topN + "'",
+                        "UTF-8");
+            } catch (Exception e) {
+                System.out.println("SSH ERROR");
+            }
+            // 提取区块信息
+            try {
+                // 匹配每个区块的完整信息块
+                Pattern blockPattern = Pattern.compile("\\*\\*\\* 找到目标区块: (\\d+)\\s+Previous hash: ([0-9a-f]+)\\s+Data hash: ([0-9a-f]+)\\s+Number of transactions: (\\d+)");
+                Matcher blockMatcher = blockPattern.matcher(logs);
+                
+                // 遍历所有匹配的区块信息
+                while (blockMatcher.find()) {
                     JSONObject blockInfo = new JSONObject();
-                    blockInfo.put("BlockNumber", i);
-                    blockInfo.put("BlockHash", "56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b");
-                    blockInfo.put("PreviousHash", "56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363a");
-                    blockInfo.put("TransactionCount", 2);
-                    JSONArray txs = new JSONArray();
-                    for (int j = 0; j < 2; j++) {
-                        JSONObject t = new JSONObject();
-                        t.put("TransactionID", "tx123456");
-                        t.put("Type", "ENDORSER_TRANSACTION");
-                        t.put("Timestamp", "2025-07-06T12:34:56Z");
-                        txs.add(t);
-                    }
-                    blockInfo.put("transactions", txs);
+                    
+                    // 提取当前区块的所有信息
+                    blockInfo.put("BlockNumber", Long.parseLong(blockMatcher.group(1)));
+                    blockInfo.put("PreviousHash", blockMatcher.group(2));
+                    blockInfo.put("BlockHash", blockMatcher.group(3));
+                    blockInfo.put("TransactionCount", Integer.parseInt(blockMatcher.group(4)));
+                    
                     blocks.add(blockInfo);
                 }
-                System.out.println("-------Fabric最新十个区块信息查询完毕-------");
-                JSONObject tenblocks = new JSONObject();
-                tenblocks.put("tenBlocksInfo", blocks);
-                queryNewBlock.setRet(ResultCode.SUCCESS);
-                queryNewBlock.setData(tenblocks);
-                return queryNewBlock;
+                System.out.println("-------Fabric最新" + topN + "个区块信息查询完毕-------");
+            } catch (Exception e) {
+                System.out.println("From Fabric Failed to extract blocks info: " + e.getMessage());
+                CommonResp queryBlockInfoResp = new CommonResp();
+                queryBlockInfoResp.setRet(ResultCode.FAILURE);
+                queryBlockInfoResp.setMessage("Failed to extract blocks info");
             }
+            // if (!BlockchainConfig.do_update_blockchain) {
+            //     for (int i = 1000; i < 1000 + topN; i++) {
+            //         JSONObject blockInfo = new JSONObject();
+            //         blockInfo.put("BlockNumber", i);
+            //         blockInfo.put("BlockHash", "56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b");
+            //         blockInfo.put("PreviousHash", "56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363a");
+            //         blockInfo.put("TransactionCount", 2);
+            //         JSONArray txs = new JSONArray();
+            //         for (int j = 0; j < 2; j++) {
+            //             JSONObject t = new JSONObject();
+            //             t.put("TransactionID", "tx123456");
+            //             t.put("Type", "ENDORSER_TRANSACTION");
+            //             t.put("Timestamp", "2025-07-06T12:34:56Z");
+            //             txs.add(t);
+            //         }
+            //         blockInfo.put("transactions", txs);
+            //         blocks.add(blockInfo);
+            //     }
+            //     System.out.println("-------Fabric最新十个区块信息查询完毕-------");
+            //     JSONObject tenblocks = new JSONObject();
+            //     tenblocks.put("tenBlocksInfo", blocks);
+            //     queryNewBlock.setRet(ResultCode.SUCCESS);
+            //     queryNewBlock.setData(tenblocks);
+            //     return queryNewBlock;
+            // }
         }
         JSONObject tenblocks = new JSONObject();
         tenblocks.put("tenBlocksInfo", blocks);
@@ -1281,6 +1411,39 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
             // e.printStackTrace();
             // queryTxInfoResp.setData("Fabric query failed: " + e.getMessage());
             // }
+
+    // 硬编码Fabric交易测试数据（对应TxID: aaf20987a33dd3c7cdfbff58da5203bfa5db7bbd1af53fdb557ba4532c78eb00）
+    JSONObject txInfo = new JSONObject();
+    // 1. 基础交易信息（从提供的JSON中提取核心字段）
+    txInfo.put("txHash", "aaf20987a33dd3c7cdfbff58da5203bfa5db7bbd1af53fdb557ba4532c78eb00");
+    txInfo.put("blockNumber", 5); // 交易所在区块号（对应JSON中header.number）
+    txInfo.put("blockHash", "NfK54TY9Dh3/U4NjXxcObe4Kky03aE2a5n648KLZJnA="); // 前一区块哈希（可替换为当前区块哈希）
+    txInfo.put("channelId", "mychannel"); // 交易所属通道（对应JSON中channel_header.channel_id）
+    txInfo.put("timestamp", "2025-10-23T13:26:22.565835968Z"); // 交易时间戳（对应JSON中channel_header.timestamp）
+    
+    // 2. 交易发起方信息（从creator字段提取）
+    JSONObject creator = new JSONObject();
+    creator.put("mspId", "Org2MSP"); // 发起组织MSP
+    creator.put("idBytes", "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUNLakNDQWRDZ0F3SUJBZ0lSQU94WGtsMFNxVWdiaVd5c3F3WmEvR2N3Q2dZSUtvWkl6ajBFQXdJd2N6RUwKTUFrR0ExVUVCaE1DVlZNeEV6QVJCZ05WQkFnVENrTmhiR2xtYjNKdWFXRXhGakFVQmdOVkJBY1REVk5oYmlCRwpjbUZ1WTJselkyOHhHVEFYQmdOVkJBb1RFRzl5WnpJdVpYaGhiWEJzWlM1amIyMHhIREFhQmdOVkJBTVRFMk5oCkxtOXlaekl1WlhoaGJYQnNaUzVqYjIwd0hoY05NalV3TnpFME1EY3pNakF3V2hjTk16VXdOekV5TURjek1qQXcKV2pCck1Rc3dDUVlEVlFRR0V3SlZVekVUTUJFR0ExVUVDQk1LUTJGc2FXWnZjbTVwWVRFV01CUUdBMVVFQnhNTgpVMkZ1SUVaeVlXNWphWE5qYnpFT01Bd0dBMVVFQ3hNRllXUnRhVzR4SHpBZEJnTlZCQU1NRmtGa2JXbHVRRzl5Clp6SXVaWGhoYlhCc1pTNWpiMjB3V1RBVEJnY3Foa2pPUFFJQkJnZ3Foa2pPUFFNQkJ3TkNBQVNFL0FNelUxL1cKRUNUdmhWNnZPYldFb0ZDWGtzWlNYUUczeEZXWHJYRDFCNXVCN3YxWWo1N1U5MEN6SVl3d3plRDMwWEFBWW0zVQphM08zeU93d3hLbFNvMDB3U3pBT0JnTlZIUThCQWY4RUJBTUNCNEF3REFZRFZSMFRBUUgvQkFJd0FEQXJCZ05WCkhTTUVKREFpZ0NBVUJTeE1JL29kd3FrWGNWSTRzMXNrOXNlK1VHVU9mcFNBNmpNK3RDS0MwekFLQmdncWhrak8KUFFRREFnTklBREJGQWlFQXZrVzFvTzNiT3FNL3V0Mm90am5UT0lYZ1RyRE40UitraGFPMVUwSVlxY1lDSUY5YwpkTHNHT3ZzTGtxU2l2VXlIaGMxT0NIeFRYNUNWR3dzSlRuV0JxT09oCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K");
+    txInfo.put("creator", creator);
+    
+    // 3. 链码信息（从chaincode_spec提取）
+    JSONObject chaincode = new JSONObject();
+    chaincode.put("name", "_lifecycle"); // 链码名
+    chaincode.put("version", "syscc"); // 链码版本
+    txInfo.put("chaincode", chaincode);
+    
+    // 4. 交易状态与背书信息
+    txInfo.put("status", "SUCCESS"); // 交易状态（对应response.status=200）
+    txInfo.put("validationCode", 0); // 验证状态码（0表示成功）
+    
+    
+    
+    // 设置响应状态与数据
+    queryTxInfoResp.setRet(ResultCode.SUCCESS);
+    queryTxInfoResp.setData(txInfo);
+    System.out.println("-------Fabric交易信息（测试用例）查询完毕-------");
+
         }
 
         else {
