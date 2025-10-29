@@ -1846,8 +1846,9 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
         if (appArgs.contains("Access")) {// 如果是带权限控制，就把Access去掉变成普通的调用
             String[] spl = appArgs.split("Access");
             appArgs = spl[0] + spl[1];
-            if (user.getAuthority() == 0) {// 没有权限直接退出
+            if (user.getAuthority().equals((Integer)(0))) {// 没有权限直接退出
                 response.setRet(ResultCode.AUTH_ERROR);
+                return response;
             }
         }
 
