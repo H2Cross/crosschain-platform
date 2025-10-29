@@ -721,9 +721,10 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
             switch (srcChainType.toLowerCase()) {
                 case "ethereum":
                     // 执行以太坊跨链命令
+                    String ethAppArgs = appArgs.replace("\"", "\\\"");
                     String ethCmd = String.format(
                             "source /etc/profile && source ~/.bashrc && cd ~/CIPS-Gemini-v1/CIPS-Gemini-Ethereum && ./helper.sh SendCCMsg ws://127.0.0.1:10026 contract_addresses_%d.toml %d "
-                                    + srcappId + " " + dstappId + " " + appArgs,
+                                    + srcappId + " " + dstappId + " " + ethAppArgs,
                             srcChainId, getChainId(dstChainType, dstIp));
                     String ethResult = SSHConfig.executeCMD(ethCmd, "UTF-8");
 
@@ -835,7 +836,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                         }
 
                         // 提取目标链哈希
-                        String ethTofiscoDstPattern = "get req txhash: ([a-fA-F0-9]+)";
+                        String ethTofiscoDstPattern = "get req txhash: (0x[a-fA-F0-9]+)";
                         Pattern ethTofiscoDstRegex = Pattern.compile(ethTofiscoDstPattern);
                         Matcher ethTofiscoDstMatcher = ethTofiscoDstRegex.matcher(fiscoFromEthLogs);
                         String ethTofiscoDstHash = "";
@@ -1404,7 +1405,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                         srcRespHash = fabricRespMatcher.find() ? fabricRespMatcher.group(1) : "";
 
                         // 提取目标链哈希
-                        String fabrictobubiDstPattern = "get req txhash: (0x[a-fA-F0-9]+)";
+                        String fabrictobubiDstPattern = "contractCallGo succeed,hash=([a-fA-F0-9]+)";
                         Pattern fabrictobubiDstRegex = Pattern.compile(fabrictobubiDstPattern);
                         Matcher fabrictobubiDstMatcher = fabrictobubiDstRegex.matcher(fabrictobubilog);
                         dstHash = fabrictobubiDstMatcher.find() ? fabrictobubiDstMatcher.group(1) : "";
@@ -1544,44 +1545,22 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                         String cmLogCmd = "cat /root/CIPS-Gemini-v1/CIPS-Gemini-ChainMaker/logs/chainmaker.log";
                         String cmLogs = SSHConfig.executeCMD(cmLogCmd, "UTF-8");
 
-                        // 执行布比链命令并获取结果
-                        String bubiCmd = "source /etc/profile && source ~/.bashrc && cd /root/CIPS-Gemini-v1/CIPS-Gemini-Bubi && docker exec crossbubi_container go run main.go send";
-                        String bubiResult = SSHConfig.executeCMD(bubiCmd, "UTF-8");
+                        // 提取源链请求哈希
+                        String srcReqPattern = "Obtained request cmhash on the source chain\\([0-9]+\\): ([a-fA-F0-9]+)";
+                        Pattern srcReqRegex = Pattern.compile(srcReqPattern);
+                        Matcher srcReqMatcher = srcReqRegex.matcher(cmFromEthLogs);
+                        srcReqHash = srcReqMatcher.find() ? srcReqMatcher.group(1) : "";
 
-                        // 提取源链请求哈希（从bubiResult中提取）
-                        String bubiReqPattern = "chain: SendMsg succeed @ ([a-fA-F0-9]+)";
-                        Pattern bubiReqRegex = Pattern.compile(bubiReqPattern);
-                        Matcher bubiReqMatcher = bubiReqRegex.matcher(bubiResult);
-                        String bubiReqHash = "";
-                        if (bubiReqMatcher.find()) {
-                            bubiReqHash = bubiReqMatcher.group(1);
-                            System.out.println("成功提取到源链请求哈希: " + bubiReqHash);
-                        } else {
-                            System.out.println("未能匹配到源链请求哈希");
-                            System.out.println("使用的正则表达式: " + bubiReqPattern);
-                            System.out.println("实际输出内容：");
-                            System.out.println(bubiResult);
-                        }
-
-                        // 提取源链响应哈希
-                        String bubiRespPattern = "contractCallGo succeed,hash=([a-fA-F0-9]+)";
-                        Pattern bubiRespRegex = Pattern.compile(bubiRespPattern);
-                        Matcher bubiRespMatcher = bubiRespRegex.matcher(bubiLogs);
-                        String bubiRespHash = "";
-                        if (bubiRespMatcher.find()) {
-                            bubiRespHash = bubiRespMatcher.group(1);
-                            System.out.println("成功提取到源链响应哈希: " + bubiRespHash);
-                        } else {
-                            System.out.println("未能匹配到源链响应哈希");
-                            System.out.println("使用的正则表达式: " + bubiRespPattern);
-                            System.out.println("实际日志内容：");
-                            System.out.println(bubiLogs);
-                        }
+                        // 提取源链响应哈希（获取第一个有效匹配）
+                        String srcRespPattern = "get resp txhash: ([a-fA-F0-9]+)";
+                        Pattern srcRespRegex = Pattern.compile(srcRespPattern);
+                        Matcher srcRespMatcher = srcRespRegex.matcher(cmFromEthLogs);
+                        srcRespHash = srcRespMatcher.find() ? srcRespMatcher.group(1) : "";
 
                         // 提取目标链哈希
-                        String bubiToCmDstPattern = "get req txhash: ([a-fA-F0-9]+)";
+                        String bubiToCmDstPattern = "contractCallGo succeed,hash=([a-fA-F0-9]+)";
                         Pattern bubiToCmDstRegex = Pattern.compile(bubiToCmDstPattern);
-                        Matcher bubiToCmDstMatcher = bubiToCmDstRegex.matcher(cmLogs);
+                        Matcher bubiToCmDstMatcher = bubiToCmDstRegex.matcher(bubiLogs);
                         String bubiToCmDstHash = "";
                         if (bubiToCmDstMatcher.find()) {
                             bubiToCmDstHash = bubiToCmDstMatcher.group(1);
@@ -1593,8 +1572,8 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                             System.out.println(cmLogs);
                         }
 
-                        resultObj.put("srcReqHash", bubiReqHash);
-                        resultObj.put("srcRespHash", bubiRespHash);
+                        resultObj.put("srcReqHash", srcReqHash);
+                        resultObj.put("srcRespHash", srcRespHash);
                         resultObj.put("dstHash", bubiToCmDstHash);
                         resultObj.put("crossChainResult", "布比链跨长安链操作执行成功");
                     }
@@ -1606,8 +1585,9 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                     break;
                 case "bubi":
                     // 执行布比链跨链命令
+                    String bubiAppArgs = appArgs.replaceAll("\"", "\\\\\""); // 转义双引号
                     String bubiCmd = "source /etc/profile && source ~/.bashrc && cd /root/CIPS-Gemini-v1/CIPS-Gemini-Bubi && docker exec crossbubi_container go run main.go send "
-                            + srcappId + " " + dstappId + " " + appArgs;
+                            + srcappId + " " + dstappId + " " + bubiAppArgs;
                     String bubiResult = SSHConfig.executeCMD(bubiCmd, "UTF-8");
 
                     // 打印命令输出用于调试
@@ -1779,7 +1759,7 @@ public class CrosschainServiceImpl extends ServiceImpl<CrosschainMapper, Crossch
                         String bubiRespHash = bubiRespMatcher.find() ? bubiRespMatcher.group(1) : "";
 
                         // 提取目标链哈希
-                        String bubiTofiscoDstPattern = "get req txhash: ([a-fA-F0-9]+)";
+                        String bubiTofiscoDstPattern = "get req txhash: (0x[a-fA-F0-9]+)";
                         Pattern bubiTofiscoDstRegex = Pattern.compile(bubiTofiscoDstPattern);
                         Matcher bubiTofiscoDstMatcher = bubiTofiscoDstRegex.matcher(fiscoLogs);
                         String bubiTofiscoDstHash = bubiTofiscoDstMatcher.find() ? bubiTofiscoDstMatcher.group(1) : "";
