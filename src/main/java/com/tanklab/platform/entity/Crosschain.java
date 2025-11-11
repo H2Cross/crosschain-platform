@@ -43,6 +43,7 @@ public class Crosschain implements Serializable {
     private String responseHash;
     private Date txTime;
     private String txHash;
+    private String result;
 
 
 }

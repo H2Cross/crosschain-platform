@@ -17,6 +17,7 @@ CREATE TABLE `crosschain` (
     `dst_hash` varchar(100) NOT NULL DEFAULT '',
     `response_hash` varchar(100) NOT NULL DEFAULT '',
     `tx_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    `result` LONGTEXT NOT NULL DEFAULT '',
 --    `cross_from` BIGINT(255) NOT NULL,
 --    `cross_to` BIGINT(255) NOT NULL,
 --    `cross_param` BIGINT(255) NOT NULL COMMENT'参数',
