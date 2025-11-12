@@ -1387,7 +1387,7 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
                 txInfo.put("to", to);
                 txInfo.put("amount", amount);
                 txInfo.put("status", status);
-                txInfo.put("raw_input", inputHex);
+                txInfo.put("rawInput", inputHex);
 
                 txInfo.put("blockHeight", blockHeight);
                 txInfo.put("blockTimestamp", closeTime);
@@ -1414,80 +1414,6 @@ public class ChainServiceImpl extends ServiceImpl<ChainMapper, Chain> implements
         }
 
         else if (portNumber.equals(fabricname)) {
-            // /* ========== 0. 固定配置 ========== */
-            // String configPath = "D:\\桌面\\fabric-samples-main\\test-network";
-            // String userName = "User1@org1.example.com";
-            // String mspId = "Org1MSP";
-            // String channelId = "mychannel";
-
-            // /* ========== 1. 证书/密钥路径 ========== */
-            // Path cryptoDir = Paths.get(configPath,
-            // "organizations", "peerOrganizations", "org1.example.com");
-            // Path certFile = cryptoDir.resolve(
-            // "users\\User1@org1.example.com\\msp\\signcerts\\cert.pem");
-            // Path keyDir = cryptoDir.resolve(
-            // "users\\User1@org1.example.com\\msp\\keystore");
-            // Path keyFile;
-            // try {
-            // keyFile = Files.list(keyDir).findFirst().orElse(null);
-            // } catch (IOException e) {
-            // queryTxInfoResp.setData("Fabric key file not found");
-            // return queryTxInfoResp;
-            // }
-            // if (keyFile == null) {
-            // queryTxInfoResp.setData("Fabric key file not found");
-            // return queryTxInfoResp;
-            // }
-
-            // try {
-            // /* 2. 内存 Wallet */
-            // X509Certificate cert = Identities.readX509Certificate(
-            // Files.newBufferedReader(certFile));
-            // PrivateKey key = Identities.readPrivateKey(
-            // Files.newBufferedReader(keyFile));
-            // Wallet wallet = Wallets.newInMemoryWallet();
-            // wallet.put(userName, Identities.newX509Identity(mspId, cert, key));
-
-            // /* 3. Gateway 连接 */
-            // Gateway gateway = Gateway.createBuilder()
-            // .identity(wallet, userName)
-            // .networkConfig(Paths.get(configPath, "connection.yaml"))
-            // .discovery(true)
-            // .connect();
-
-            // /* 4. 获取 Channel 对象（SDK 级） */
-            // Channel channel = gateway.getNetwork(channelId).getChannel();
-
-            // // 5. 用 qscc 查交易所在区块
-            // String txId = txhashreq.getTxHASH();
-            // long blockNo = channel.queryBlockByTransactionID(txId).getBlockNumber(); //
-            // 2.2.9 有这个方法
-            // BlockInfo block = channel.queryBlockByNumber(blockNo);
-
-            // // 6. 封装（2.2.9 只能拿到这些）
-            // JSONObject txInfo = new JSONObject();
-            // txInfo.put("txHash", txId);
-            // txInfo.put("blockNumber", BigInteger.valueOf(blockNo));
-            // txInfo.put("blockHash", Hex.encodeHexString(block.getDataHash()));
-            // txInfo.put("from", ""); // 2.2.9 拿不到 creator
-            // txInfo.put("to", "");
-            // txInfo.put("contractName", ""); // 2.2.9 拿不到链码名
-            // txInfo.put("method", "");
-            // txInfo.put("signature", ""); // 2.2.9 拿不到签名
-            // txInfo.put("timeStamp", ""); // 2.2.9 拿不到时间戳
-            // txInfo.put("status", "VALID"); // 2.2.9 也拿不到验证位，直接写 VALID
-
-            // queryTxInfoResp.setRet(ResultCode.SUCCESS);
-            // queryTxInfoResp.setData(txInfo);
-
-            // gateway.close();
-            // System.out.println("-------Fabric交易信息查询完毕-------");
-
-            // } catch (Exception e) {
-            // e.printStackTrace();
-            // queryTxInfoResp.setData("Fabric query failed: " + e.getMessage());
-            // }
-
             // 硬编码Fabric交易测试数据（对应TxID:
             // aaf20987a33dd3c7cdfbff58da5203bfa5db7bbd1af53fdb557ba4532c78eb00）
             JSONObject txInfo = new JSONObject();
